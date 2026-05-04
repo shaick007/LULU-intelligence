@@ -98,7 +98,6 @@
         .ai-suggestion { font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--lulu-green); background: transparent; color: var(--lulu-green); border-radius: 15px; padding: 4px 12px; transition: 0.2s; white-space: nowrap; }
         .ai-suggestion:hover { background: var(--lulu-green); color: white; transform: translateY(-2px); }
 
-        /* Autocomplete Dropdown Styles */
         .autocomplete-item { cursor: pointer; font-size: 13px; font-weight: 500; background-color: var(--card-bg); color: var(--text-main); border-color: var(--border-color); }
         .autocomplete-item:hover { background-color: var(--table-hover); color: var(--lulu-green); }
         [data-theme="dark"] .autocomplete-item:hover { background-color: var(--table-hover); }
@@ -145,18 +144,28 @@
     </div>
     <div class="offcanvas-body p-4">
         <h6 class="fw-bold mb-3">📅 Time Selection</h6>
+        
+        <!-- TARGET PERIOD MULTI-SELECT -->
         <div class="p-3 border rounded bg-light mb-3" style="border-color: var(--border-color) !important;">
-            <label class="small fw-bold text-success mb-1">Target Period (A)</label>
-            <div class="row g-2">
-                <div class="col-6"><select id="selYear" class="form-select cascade-select" onchange="renderMonthSelection()"></select></div>
-                <div class="col-6"><select id="selMonth" class="form-select cascade-select" onchange="runAnalysis()"></select></div>
+            <label class="small fw-bold text-success mb-2">Target Period (A)</label>
+            <div class="mb-2">
+                <select id="selYear" class="form-select cascade-select" onchange="renderMonthSelection()"></select>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary w-100 text-start cascade-select bg-white" type="button" data-bs-toggle="dropdown" id="btn_TargetMonth">Select Months</button>
+                <div class="dropdown-menu dropdown-menu-custom shadow" id="f_TargetMonth" onclick="event.stopPropagation()"></div>
             </div>
         </div>
+
+        <!-- COMPARISON PERIOD MULTI-SELECT -->
         <div id="customTimeBox" class="p-3 border rounded mb-3" style="display: none; background: #fff8e1; border-color: #ffe082 !important;">
-            <label class="small fw-bold text-warning mb-1" style="color: #d4a106 !important;">Comparison Period (B)</label>
-            <div class="row g-2">
-                <div class="col-6"><select id="selPrevYear" class="form-select cascade-select" onchange="renderPrevMonthSelection()"></select></div>
-                <div class="col-6"><select id="selPrevMonth" class="form-select cascade-select" onchange="runAnalysis()"></select></div>
+            <label class="small fw-bold text-warning mb-2" style="color: #d4a106 !important;">Comparison Period (B)</label>
+            <div class="mb-2">
+                <select id="selPrevYear" class="form-select cascade-select" onchange="renderPrevMonthSelection()"></select>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary w-100 text-start cascade-select bg-white" type="button" data-bs-toggle="dropdown" id="btn_PrevMonth">Select Months</button>
+                <div class="dropdown-menu dropdown-menu-custom shadow" id="f_PrevMonth" onclick="event.stopPropagation()"></div>
             </div>
         </div>
         
@@ -207,15 +216,13 @@
             <div class="ai-card">
                 <div class="d-flex align-items-center mb-2">
                     <span class="fs-4 me-2">🔍</span>
-                    <h6 class="fw-bold mb-0 text-success">LuLu Smart Ask</h6>
+                    <h6 class="fw-bold mb-0 text-success">LuLu Smart Ask Agent</h6>
                 </div>
-                <!-- WRAPPED IN POSITION-RELATIVE FOR AUTOCOMPLETE -->
                 <div class="input-group mt-2 shadow-sm rounded-pill position-relative">
                     <input type="text" id="aiSearchBox" class="form-control ai-search-input" placeholder="Type to search (e.g., 'top 10 brands in rice', 'apple', 'electronics')..." autocomplete="off">
                     <button class="btn ai-btn-search" onclick="processSmartSearch()">Search</button>
                     <button class="btn btn-outline-danger ai-btn-clear" onclick="clearSmartSearch()">Clear</button>
                     
-                    <!-- DYNAMIC AUTOCOMPLETE DROPDOWN -->
                     <ul id="autocomplete-list" class="list-group position-absolute w-100 shadow rounded-4 border-0" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; top: 110%;"></ul>
                 </div>
                 <div id="aiSuggestions" class="mt-3 d-flex flex-wrap gap-2"></div>
@@ -270,8 +277,6 @@ let sortConfig = { col: 'cur', dir: 'desc' };
 let currentAggLevel = "Department";
 let drillDownStack = []; 
 let searchConfig = { isActive: false, limit: 100, forceLevel: null, keyword: null };
-
-// AUTOCOMPLETE STATE
 let suggestedQueries = []; 
 
 function toggleTheme() {
@@ -345,7 +350,7 @@ upload.onchange = e => {
             populateMultiSelect('Department', rows);
             cascadeUpdate(2); 
             
-            buildSearchableTerms(); // Build Autocomplete index
+            buildSearchableTerms();
             generateRecommendations();
             
             document.getElementById('dashboard').style.display = 'block';
@@ -354,7 +359,6 @@ upload.onchange = e => {
     reader.readAsArrayBuffer(e.target.files[0]);
 };
 
-// --- NEW: AUTOCOMPLETE BUILDER ---
 function buildSearchableTerms() {
     const depts = [...new Set(rows.map(r => r.Department))].filter(Boolean);
     const cats = [...new Set(rows.map(r => r.Category))].filter(Boolean);
@@ -366,7 +370,6 @@ function buildSearchableTerms() {
     depts.forEach(d => suggestedQueries.push({ text: `Top categories in ${d}`, type: 'Department Filter' }));
 }
 
-// REAL-TIME AUTOCOMPLETE LISTENER
 document.getElementById('aiSearchBox').addEventListener('input', function(e) {
     const val = this.value.toLowerCase().trim();
     const list = document.getElementById('autocomplete-list');
@@ -377,7 +380,6 @@ document.getElementById('aiSearchBox').addEventListener('input', function(e) {
         return;
     }
 
-    // Filter queries that contain the typed text
     const matches = suggestedQueries.filter(q => q.text.toLowerCase().includes(val)).slice(0, 6);
     
     if (matches.length > 0) {
@@ -385,11 +387,8 @@ document.getElementById('aiSearchBox').addEventListener('input', function(e) {
         matches.forEach(match => {
             const li = document.createElement('li');
             li.className = 'list-group-item list-group-item-action autocomplete-item border-0 border-bottom';
-            
-            // Highlight the matching characters
             const regex = new RegExp(`(${val})`, "gi");
             const highlightedText = match.text.replace(regex, "<span class='text-success fw-bold'>$1</span>");
-            
             li.innerHTML = `<span>🔍 ${highlightedText}</span> <span class="badge bg-light text-muted float-end" style="font-size:10px;">${match.type}</span>`;
             li.onclick = () => {
                 document.getElementById('aiSearchBox').value = match.text;
@@ -403,14 +402,12 @@ document.getElementById('aiSearchBox').addEventListener('input', function(e) {
     }
 });
 
-// Hide autocomplete when clicking elsewhere
 document.addEventListener('click', function (e) {
     if (e.target.id !== 'aiSearchBox') {
         const list = document.getElementById('autocomplete-list');
         if(list) list.style.display = 'none';
     }
 });
-// ---------------------------------
 
 function generateRecommendations() {
     if (!rows.length) return;
@@ -461,22 +458,46 @@ function initUI() {
     renderPrevMonthSelection();
 }
 
+// --- NEW MULTI-MONTH RENDER LOGIC ---
+function updateTimeBtnText(type) {
+    const checked = Array.from(document.querySelectorAll(`#f_${type} input:checked`)).map(cb => cb.value);
+    const btn = document.getElementById(`btn_${type}`);
+    if (checked.length === 0) btn.innerText = `Select Month`;
+    else if (checked.length === 1) btn.innerText = checked[0];
+    else btn.innerText = `${checked.length} Months Selected`;
+}
+
 function renderMonthSelection() {
     const y = document.getElementById('selYear').value;
-    const sm = document.getElementById('selMonth');
+    const container = document.getElementById('f_TargetMonth');
+    if (!yearMonthMap[y]) {
+        container.innerHTML = '';
+        updateTimeBtnText('TargetMonth');
+        runAnalysis();
+        return;
+    }
     const available = [...yearMonthMap[y]].sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-    sm.innerHTML = available.map(m => `<option value="${m}">${m}</option>`).join("");
-    sm.value = available[available.length - 1];
+    container.innerHTML = available.map((m, i) => 
+        `<label><input type="checkbox" value="${m}" ${i === available.length - 1 ? 'checked' : ''} onchange="updateTimeBtnText('TargetMonth'); runAnalysis()"> ${m}</label>`
+    ).join("");
+    updateTimeBtnText('TargetMonth');
     runAnalysis();
 }
 
 function renderPrevMonthSelection() {
     const y = document.getElementById('selPrevYear').value;
-    const sm = document.getElementById('selPrevMonth');
-    if (!yearMonthMap[y]) return;
+    const container = document.getElementById('f_PrevMonth');
+    if (!yearMonthMap[y]) {
+        container.innerHTML = '';
+        updateTimeBtnText('PrevMonth');
+        if (mode === 'Custom') runAnalysis();
+        return;
+    }
     const available = [...yearMonthMap[y]].sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-    sm.innerHTML = available.map(m => `<option value="${m}">${m}</option>`).join("");
-    sm.value = available[available.length - 1];
+    container.innerHTML = available.map((m, i) => 
+        `<label><input type="checkbox" value="${m}" ${i === available.length - 1 ? 'checked' : ''} onchange="updateTimeBtnText('PrevMonth'); runAnalysis()"> ${m}</label>`
+    ).join("");
+    updateTimeBtnText('PrevMonth');
     if(mode === 'Custom') runAnalysis();
 }
 
@@ -490,7 +511,7 @@ function setMode(m) {
 }
 
 function processSmartSearch() {
-    document.getElementById('autocomplete-list').style.display = 'none'; // hide dropdown
+    document.getElementById('autocomplete-list').style.display = 'none'; 
     let query = document.getElementById('aiSearchBox').value.toLowerCase().trim();
     if(!query) { clearSmartSearch(); return; }
 
@@ -612,27 +633,51 @@ function clearAllDrill() {
     else runAnalysis();
 }
 
+// --- NEW MULTI-MONTH ANALYSIS LOGIC ---
 function runAnalysis() {
-    const curMonth = document.getElementById('selMonth').value;
     const curYear = document.getElementById('selYear').value;
     const metric = document.getElementById('metric').value;
-    if(!curMonth || !curYear) return;
+    if(!curYear) return;
 
-    let prevMonth, prevYear;
+    const targetMonths = Array.from(document.querySelectorAll('#f_TargetMonth input:checked')).map(i => i.value);
+    let prevMonths = [];
+    let prevYear = "";
+
     if (mode === 'Custom') {
-        prevMonth = document.getElementById('selPrevMonth').value;
         prevYear = document.getElementById('selPrevYear').value;
+        prevMonths = Array.from(document.querySelectorAll('#f_PrevMonth input:checked')).map(i => i.value);
     } else if (mode === 'YoY') { 
-        prevMonth = curMonth; 
-        prevYear = (parseInt(curYear) - 1).toString(); 
+        prevYear = (parseInt(curYear) - 1).toString();
+        prevMonths = [...targetMonths];
     } else {
-        const mIdx = monthOrder.indexOf(curMonth);
-        if (mIdx === 0) { prevMonth = "DEC"; prevYear = (parseInt(curYear) - 1).toString(); } 
-        else { prevMonth = monthOrder[mIdx - 1]; prevYear = curYear; }
+        prevYear = curYear; 
     }
 
-    const curLabel = `${curMonth} ${curYear}`;
-    const prevLabel = `${prevMonth} ${prevYear}`;
+    let curLabels = targetMonths.map(m => `${m} ${curYear}`);
+    let prevLabels = [];
+
+    if (mode === 'MoM') {
+        prevLabels = targetMonths.map(m => {
+            const mIdx = monthOrder.indexOf(m);
+            if (mIdx === 0) return `DEC ${parseInt(curYear) - 1}`;
+            return `${monthOrder[mIdx - 1]} ${curYear}`;
+        });
+    } else {
+        prevLabels = prevMonths.map(m => `${m} ${prevYear}`);
+    }
+
+    // Dynamic Header Formulation
+    const formatTimeLabel = (months, y) => {
+        if (months.length === 0) return `No Selection`;
+        if (months.length === 1) return `${months[0]} ${y}`;
+        if (months.length <= 3) return `${months.join('/')} ${y}`;
+        return `${months.length} Months ${y}`;
+    };
+
+    let displayCurLabel = formatTimeLabel(targetMonths, curYear);
+    let displayPrevLabel = mode === 'MoM' && targetMonths.length > 0 
+        ? (targetMonths.length === 1 ? prevLabels[0] : `${targetMonths.length} Prev Months`) 
+        : formatTimeLabel(prevMonths, prevYear);
 
     let d = getFilteredDataForLevel(hierarchyConfig.length);
 
@@ -688,8 +733,9 @@ function runAnalysis() {
     d.forEach(r => {
         const k = r[currentAggLevel] || "Unknown Item";
         if(!map[k]) map[k] = { cur: 0, prev: 0 };
-        if(r["Calendar Year/Month"] === curLabel) map[k].cur += (+r[metric] || 0);
-        if(r["Calendar Year/Month"] === prevLabel) map[k].prev += (+r[metric] || 0);
+        const rowDate = r["Calendar Year/Month"];
+        if(curLabels.includes(rowDate)) map[k].cur += (+r[metric] || 0);
+        if(prevLabels.includes(rowDate)) map[k].prev += (+r[metric] || 0);
     });
 
     let results = Object.entries(map);
@@ -706,7 +752,7 @@ function runAnalysis() {
         return sortConfig.dir === 'desc' ? vB - vA : vA - vB;
     });
 
-    animateDataUpdate(() => updateDashboard(results, metric, curLabel, prevLabel));
+    animateDataUpdate(() => updateDashboard(results, metric, displayCurLabel, displayPrevLabel));
 }
 
 function animateDataUpdate(updateFunc) {
