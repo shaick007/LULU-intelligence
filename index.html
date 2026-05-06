@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuLu BI: Executive Master Dashboard</title>
     
     <!-- Dependencies -->
@@ -9,254 +10,317 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
         /* --- THEME VARIABLES --- */
         :root { 
-            --lulu-green: #008334; 
-            --bg: #f0f2f5; 
-            --text-main: #1a1a1a;
-            --text-muted: #636e72;
-            --card-bg: #ffffff;
-            --border-color: #eee;
-            --table-hover: #eef7f1;
-            --success: #2e7d32; 
-            --danger: #d32f2f; 
-            --header-bg: #ffffff;
-            --input-bg: #ffffff;
-            --input-border: #e0e0e0;
-            --ai-bg: linear-gradient(145deg, #f0fdf4, #ffffff);
-            --drill-bg: #f8f9fa;
-            --pill-up-bg: #e6f4ea;
-            --pill-down-bg: #fce8e6;
+            --lulu-green: #00A642; 
+            --bg: #F2F2F7; 
+            --text-main: #1d1d1f;
+            --text-muted: #86868b;
+            
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-blur: blur(24px);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            
+            --table-hover: rgba(0, 166, 66, 0.08);
+            --success: #34c759; 
+            --danger: #ff3b30; 
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --input-border: rgba(0, 0, 0, 0.1);
+            --drill-bg: rgba(255, 255, 255, 0.4);
+            --pill-up-bg: rgba(52, 199, 89, 0.15);
+            --pill-down-bg: rgba(255, 59, 48, 0.15);
         }
 
+        /* --- DARK MODE --- */
         [data-theme="dark"] {
-            --lulu-green: #00e676; 
-            --bg: #121212;
-            --text-main: #e0e0e0;
-            --text-muted: #a0a0a0;
-            --card-bg: #1e1e1e;
-            --border-color: #333333;
-            --table-hover: #1a2e22;
-            --success: #00e676;
-            --danger: #ff5252;
-            --header-bg: #1e1e1e;
-            --input-bg: #2c2c2c;
-            --input-border: #444444;
-            --ai-bg: linear-gradient(145deg, #1a2e22, #1e1e1e);
-            --drill-bg: #252525;
-            --pill-up-bg: #0b2e13;
-            --pill-down-bg: #3b1114;
+            --lulu-green: #30d158; 
+            --bg: #000000; 
+            --text-main: #f5f5f7;
+            --text-muted: #98989d;
+            
+            --glass-bg: rgba(28, 28, 30, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            
+            --table-hover: rgba(48, 209, 88, 0.15);
+            --success: #32d74b;
+            --danger: #ff453a;
+            --input-bg: rgba(44, 44, 46, 0.8);
+            --input-border: rgba(255, 255, 255, 0.1);
+            --drill-bg: rgba(0, 0, 0, 0.3);
+            --pill-up-bg: rgba(50, 215, 75, 0.15);
+            --pill-down-bg: rgba(255, 69, 58, 0.15);
         }
 
-        body { background: var(--bg); color: var(--text-main); font-family: 'Poppins', sans-serif; font-size: 13px; transition: background 0.3s, color 0.3s; }
+        body { background: var(--bg); color: var(--text-main); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; transition: background 0.4s ease, color 0.4s ease; overflow-x: hidden; }
         
-        .header { background: var(--header-bg); border-bottom: 5px solid var(--lulu-green); border-radius: 0 0 30px 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: background 0.3s; }
-        .nav-pill-lulu { border-radius: 20px; font-weight: 700; padding: 8px 20px; border: 2px solid var(--lulu-green); background: transparent; color: var(--lulu-green); transition: 0.3s; }
-        .nav-pill-lulu.active { background: var(--lulu-green); color: white; }
+        /* AUTO-HIDE APPLE SCROLLBARS */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 10px; transition: background-color 0.3s ease; }
+        body:hover::-webkit-scrollbar-thumb,
+        .dropdown-menu-custom:hover::-webkit-scrollbar-thumb,
+        .sidebar-sticky:hover::-webkit-scrollbar-thumb,
+        .chart-scroll-wrapper:hover::-webkit-scrollbar-thumb,
+        .table-responsive:hover::-webkit-scrollbar-thumb { background-color: rgba(134, 134, 139, 0.3); }
+        ::-webkit-scrollbar-thumb:hover { background-color: rgba(134, 134, 139, 0.6) !important; }
 
-        .kpi-container { background: var(--card-bg); border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03); transition: transform 0.3s, background 0.3s, border-color 0.3s; border-bottom: 4px solid var(--border-color); }
-        .kpi-container:hover { border-bottom-color: var(--lulu-green); transform: translateY(-3px); }
-        .kpi-val { font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin-top: 5px; transition: color 0.3s;}
-
-        .matrix-card { background: var(--card-bg); border-radius: 25px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.05); transition: background 0.3s; }
-        .table { color: var(--text-main); transition: color 0.3s; }
-        .table thead th { background: var(--drill-bg); color: var(--text-muted); font-size: 11px; text-transform: uppercase; border: none; padding: 15px; transition: background 0.3s, color 0.3s; }
-        .table-hover tbody tr:hover { background-color: var(--table-hover) !important; color: var(--text-main); }
+        /* BENTO GLASS ELEMENTS */
+        .bento-glass { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); transition: background 0.4s, border-color 0.4s, transform 0.2s; }
         
-        .fade-transition { transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out; opacity: 1; transform: translateY(0); }
-        .fade-out { opacity: 0; transform: translateY(10px); }
+        /* RESPONSIVE HEADER ISLAND */
+        .header-island { border-radius: 28px; margin: 20px 24px; padding: 15px 24px; display: flex; flex-wrap: wrap; gap: 15px; }
+        .header-island .header-left, .header-island .header-right { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
+        
+        .nav-pill-lulu { border-radius: 20px; font-weight: 600; padding: 6px 18px; border: 1.5px solid var(--lulu-green); background: transparent; color: var(--lulu-green); transition: 0.3s; font-size: 12px; white-space: nowrap; }
+        .nav-pill-lulu.active { background: var(--lulu-green); color: white; border-color: var(--lulu-green); }
 
-        .sortable { cursor: pointer; transition: 0.2s; user-select: none; }
+        .kpi-container { border-radius: 24px; padding: 24px; text-align: left; position: relative; overflow: hidden; height: 100%; transition: transform 0.2s, border-color 0.2s; }
+        .kpi-container:hover { transform: translateY(-4px); border-color: var(--lulu-green); }
+        .kpi-val { font-size: 1.7rem; font-weight: 800; color: var(--text-main); margin-top: 8px; letter-spacing: -0.5px;}
+        .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+
+        .matrix-card { border-radius: 28px; overflow: hidden; margin-bottom: 24px; }
+        
+        .table { color: var(--text-main); margin-bottom: 0; min-width: 600px; }
+        .table thead th { background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); padding: 16px 20px; letter-spacing: 0.5px; white-space: nowrap; }
+        .table tbody td { border-bottom: 1px solid var(--glass-border); padding: 14px 20px; font-size: 13px; font-weight: 500; }
+        .table-hover tbody tr { transition: background-color 0.2s ease; }
+        .table-hover tbody tr:hover { background-color: var(--table-hover) !important; }
+        
+        .fade-transition { transition: opacity 0.2s ease, transform 0.2s ease; opacity: 1; transform: translateY(0); }
+        .fade-out { opacity: 0; transform: translateY(8px); }
+
+        .sortable { cursor: pointer; user-select: none; }
         .sortable:hover { color: var(--lulu-green); }
-        .sort-icon { font-size: 10px; margin-left: 5px; color: var(--text-muted); }
-        .sort-active { color: var(--lulu-green); font-weight: 800; }
+        .sort-icon { font-size: 10px; margin-left: 5px; opacity: 0.5; }
+        .sort-active { color: var(--lulu-green); font-weight: 700; opacity: 1; }
 
-        .num { text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 700; white-space: nowrap; }
-        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .num { text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 600; white-space: nowrap; }
+        
+        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
         .bg-up { background: var(--pill-up-bg); color: var(--success); }
         .bg-down { background: var(--pill-down-bg); color: var(--danger); }
         
-        .cascade-select { border-radius: 10px; border: 1px solid var(--input-border); font-size: 12px; font-weight: 600; width: 100%; background-color: var(--input-bg); color: var(--text-main); transition: background 0.3s, color 0.3s, border-color 0.3s; }
-        .cascade-select:focus { border-color: var(--lulu-green); box-shadow: 0 0 0 3px rgba(0,131,52,0.1); }
+        .cascade-select, .form-control { border-radius: 14px; border: 1px solid var(--input-border); font-size: 12px; font-weight: 500; background: var(--input-bg); color: var(--text-main); transition: all 0.2s ease; }
+        .cascade-select:focus, .form-control:focus { border-color: var(--lulu-green); box-shadow: 0 0 0 4px rgba(0, 166, 66, 0.1); background: var(--glass-bg); }
         
-        .dropdown-menu-custom { background: var(--card-bg); max-height: 250px; overflow-y: auto; font-size: 12px; width: 100%; border-color: var(--border-color); }
-        .dropdown-menu-custom label { display: block; padding: 5px 10px; cursor: pointer; color: var(--text-main); }
-        .dropdown-menu-custom label:hover { background: var(--drill-bg); }
-        .dropdown-menu-custom input { margin-right: 8px; accent-color: var(--lulu-green); }
+        .dropdown-menu-custom { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); border-radius: 16px; max-height: 300px; overflow-y: auto; padding: 6px; }
+        .dropdown-menu-custom label, .dropdown-item-custom { display: block; padding: 8px 12px; cursor: pointer; color: var(--text-main); font-size: 12px; font-weight: 500; border-radius: 10px; transition: 0.2s; margin-bottom: 2px; }
+        .dropdown-menu-custom label:hover, .dropdown-item-custom:hover { background: var(--table-hover); color: var(--lulu-green); }
+        .dropdown-menu-custom input[type="checkbox"] { margin-right: 10px; accent-color: var(--lulu-green); transform: scale(1.1); }
+        .dropdown-search { background: transparent; border-bottom: 1px solid var(--glass-border) !important; border-radius: 0; padding-left: 8px; }
 
-        .clickable-row { cursor: pointer; transition: background-color 0.2s; }
-        .clickable-row td:first-child { color: var(--lulu-green); text-decoration: underline; text-decoration-color: var(--lulu-green); text-underline-offset: 4px; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row td:first-child { color: var(--text-main); font-weight: 600; }
+        .clickable-row:hover td:first-child { color: var(--lulu-green); }
 
-        .ai-card { background: var(--ai-bg); border-left: 5px solid var(--lulu-green); border-radius: 20px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); margin-bottom: 20px; transition: background 0.3s; }
-        .ai-search-input { border-radius: 20px 0 0 20px !important; font-weight: 600; font-size: 14px; padding-left: 20px; background: var(--input-bg); color: var(--text-main); border-color: var(--lulu-green); z-index: 2; }
-        .ai-btn-search { border-radius: 0; font-weight: 700; padding: 0 25px; background: var(--lulu-green); color: white; border-color: var(--lulu-green); z-index: 2; }
-        .ai-btn-clear { border-radius: 0 20px 20px 0 !important; font-weight: 700; z-index: 2;}
+        .ai-card { border-left: none; border-top: 4px solid var(--lulu-green); }
+        .ai-search-input { border-radius: 20px 0 0 20px !important; font-weight: 500; font-size: 14px; padding-left: 20px; border-color: var(--lulu-green); }
+        .ai-btn-search { border-radius: 0; font-weight: 600; padding: 0 24px; background: var(--lulu-green); color: white; border-color: var(--lulu-green); }
+        .ai-btn-clear { border-radius: 0 20px 20px 0 !important; font-weight: 600; }
         
-        .ai-suggestion { font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--lulu-green); background: transparent; color: var(--lulu-green); border-radius: 15px; padding: 4px 12px; transition: 0.2s; white-space: nowrap; }
-        .ai-suggestion:hover { background: var(--lulu-green); color: white; transform: translateY(-2px); }
+        .ai-suggestion { font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--lulu-green); background: transparent; color: var(--lulu-green); border-radius: 15px; padding: 5px 14px; transition: all 0.2s; white-space: nowrap; }
+        .ai-suggestion:hover { background: var(--lulu-green); color: white; transform: scale(1.02); }
 
-        .autocomplete-item { cursor: pointer; font-size: 13px; font-weight: 500; background-color: var(--card-bg); color: var(--text-main); border-color: var(--border-color); }
+        .autocomplete-item { cursor: pointer; font-size: 13px; font-weight: 500; background: transparent; color: var(--text-main); border-bottom: 1px solid var(--glass-border) !important; }
         .autocomplete-item:hover { background-color: var(--table-hover); color: var(--lulu-green); }
-        [data-theme="dark"] .autocomplete-item:hover { background-color: var(--table-hover); }
 
-        .offcanvas { background-color: var(--card-bg); color: var(--text-main); }
-        .offcanvas-header { border-bottom-color: var(--border-color) !important; }
-        .btn-close { filter: invert(var(--invert-icon, 0)); }
-        [data-theme="dark"] { --invert-icon: 1; } 
-        [data-theme="dark"] .text-dark { color: #ffffff !important; }
-        [data-theme="dark"] .bg-light { background-color: var(--drill-bg) !important; color: var(--text-main) !important; }
-        [data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+        .glass-panel { background: var(--drill-bg); border: 1px solid var(--glass-border); border-radius: 16px; }
+        .sidebar-sticky { position: sticky; top: 20px; height: calc(100vh - 40px); overflow-y: auto; overflow-x: hidden; border-radius: 28px; }
+        .chart-scroll-wrapper { overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
+        
+        /* Smooth layout transitions */
+        .transition-layout { transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), padding 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        
+        /* --- MEDIA QUERIES FOR RESPONSIVENESS --- */
+        @media (max-width: 991.98px) {
+            .sidebar-sticky { position: relative; height: auto; top: 0; margin-bottom: 20px; }
+            .header-island { margin: 15px; padding: 15px; flex-direction: column; align-items: stretch; border-radius: 24px; }
+            .header-island .header-left, .header-island .header-right { justify-content: space-between; width: 100%; }
+            #sidebarCol.d-none { display: none !important; }
+        }
+        
+        @media (max-width: 767.98px) {
+            .header-left { flex-direction: column; align-items: flex-start !important; gap: 10px !important; }
+            .header-right { flex-direction: column; align-items: stretch !important; gap: 10px !important; }
+            .header-right > div { justify-content: space-between; }
+            #upload { width: 100% !important; max-width: none !important; }
+            .nav-pill-lulu { flex: 1; text-align: center; padding: 8px 10px; }
+            .kpi-container { padding: 15px; border-radius: 20px; }
+            .kpi-val { font-size: 1.4rem; }
+            .glass-panel { width: 100%; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
 
-<div class="header p-4 mb-4">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <div style="color:var(--lulu-green); font-weight:800; font-size:1.8rem;">LuLu <span class="text-dark fw-light">Intelligence</span></div>
-            <button class="btn btn-outline-success rounded-pill fw-bold" style="border-width: 2px;" data-bs-toggle="offcanvas" data-bs-target="#filterSidebar">⚙️ Data Controls</button>
-            <div class="d-flex gap-2">
-                <button id="btnMoM" class="nav-pill-lulu active" onclick="setMode('MoM')">MoM</button>
-                <button id="btnYoY" class="nav-pill-lulu" onclick="setMode('YoY')">YoY</button>
-                <button id="btnCustom" class="nav-pill-lulu" onclick="setMode('Custom')">Custom</button>
-            </div>
-        </div>
-        <div class="d-flex gap-3 align-items-center">
-            <div class="d-flex align-items-center bg-light p-2 rounded-4 border" style="border-color: var(--border-color) !important;">
-                <select id="metric" class="form-select form-select-sm border-0 bg-transparent fw-bold text-success" onchange="runAnalysis()">
-                    <option value="Sales Value">Sales (AED)</option>
-                    <option value="Sold Qty">Sold Quantity</option>
-                </select>
-                <button class="btn btn-sm btn-dark rounded-pill ms-2 fw-bold" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
-            </div>
-            <input type="file" id="upload" class="form-control" style="width:250px; border-radius:20px; background: var(--input-bg); color: var(--text-main); border-color: var(--input-border);">
-        </div>
-    </div>
-</div>
-
-<div class="offcanvas offcanvas-start shadow-lg border-0" tabindex="-1" id="filterSidebar">
-    <div class="offcanvas-header p-4">
-        <h5 class="fw-bold mb-0" style="color: var(--lulu-green);">⚙️ Master Controls</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body p-4">
-        <h6 class="fw-bold mb-3">📅 Time Selection</h6>
-        
-        <!-- TARGET PERIOD MULTI-SELECT -->
-        <div class="p-3 border rounded bg-light mb-3" style="border-color: var(--border-color) !important;">
-            <label class="small fw-bold text-success mb-2">Target Period (A)</label>
-            <div class="mb-2">
-                <select id="selYear" class="form-select cascade-select" onchange="renderMonthSelection()"></select>
-            </div>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary w-100 text-start cascade-select bg-white" type="button" data-bs-toggle="dropdown" id="btn_TargetMonth">Select Months</button>
-                <div class="dropdown-menu dropdown-menu-custom shadow" id="f_TargetMonth" onclick="event.stopPropagation()"></div>
-            </div>
-        </div>
-
-        <!-- COMPARISON PERIOD MULTI-SELECT -->
-        <div id="customTimeBox" class="p-3 border rounded mb-3" style="display: none; background: #fff8e1; border-color: #ffe082 !important;">
-            <label class="small fw-bold text-warning mb-2" style="color: #d4a106 !important;">Comparison Period (B)</label>
-            <div class="mb-2">
-                <select id="selPrevYear" class="form-select cascade-select" onchange="renderPrevMonthSelection()"></select>
-            </div>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary w-100 text-start cascade-select bg-white" type="button" data-bs-toggle="dropdown" id="btn_PrevMonth">Select Months</button>
-                <div class="dropdown-menu dropdown-menu-custom shadow" id="f_PrevMonth" onclick="event.stopPropagation()"></div>
-            </div>
+<div class="header-island bento-glass mb-4">
+    <div class="header-left">
+        <div style="font-weight:800; font-size:1.6rem; letter-spacing: -0.5px;">
+            <span style="color:var(--lulu-green);">LuLu</span> 
+            <span style="font-weight: 400;">Intelligence</span>
         </div>
         
-        <hr class="my-4" style="border-color: var(--border-color);">
-        
-        <h6 class="fw-bold mb-3">🔗 Dynamic Hierarchy</h6>
-        <div class="mb-3">
-            <label class="small fw-bold text-muted">1. Country (Multi)</label>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" id="btn_Country">All Countries</button>
-                <div class="dropdown-menu dropdown-menu-custom shadow" id="f_Country" onclick="event.stopPropagation()"></div>
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="small fw-bold text-muted">2. Department (Multi)</label>
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" id="btn_Department">All Departments</button>
-                <div class="dropdown-menu dropdown-menu-custom shadow" id="f_Department" onclick="event.stopPropagation()"></div>
-            </div>
-        </div>
-        <div class="mb-3">
-            <label class="small fw-bold text-muted">3. Category</label>
-            <select id="f_Category" class="form-select cascade-select" onchange="cascadeUpdate(3)"></select>
-        </div>
-        <div class="mb-3">
-            <label class="small fw-bold text-muted">4. Material Group</label>
-            <select id="f_MaterialGroup" class="form-select cascade-select" onchange="cascadeUpdate(4)"></select>
-        </div>
-        <div class="mb-3">
-            <label class="small fw-bold text-muted">5. Brand</label>
-            <select id="f_Brand" class="form-select cascade-select" onchange="runAnalysis()"></select>
+        <button class="btn btn-sm btn-outline-success rounded-pill fw-bold ms-lg-2" onclick="toggleSidebar()" style="font-size: 12px; border-width: 1.5px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            Hide Filters
+        </button>
+
+        <div class="d-flex gap-1 w-100 mt-2 mt-md-0" style="max-width: 300px;">
+            <button id="btnMoM" class="nav-pill-lulu active" onclick="setMode('MoM')">MoM</button>
+            <button id="btnYoY" class="nav-pill-lulu" onclick="setMode('YoY')">YoY</button>
+            <button id="btnCustom" class="nav-pill-lulu" onclick="setMode('Custom')">Custom</button>
         </div>
     </div>
-</div>
-
-<div class="container-fluid px-4 pb-5 mb-5" id="dashboard" style="display:none">
     
-    <div class="row g-3 mb-4">
-        <div class="col-md-3"><div class="kpi-container"><small class="fw-bold text-muted text-uppercase" id="lblKpiCur">Target Period</small><div id="kpiCurrent" class="kpi-val fade-transition">0</div></div></div>
-        <div class="col-md-3"><div class="kpi-container"><small class="fw-bold text-muted text-uppercase" id="lblKpiPrev">Comparison Period</small><div id="kpiPrev" class="kpi-val fade-transition">0</div></div></div>
-        <div class="col-md-3"><div class="kpi-container"><small class="fw-bold text-muted text-uppercase">Variance</small><div id="kpiVar" class="kpi-val fade-transition">0</div></div></div>
-        <div class="col-md-3"><div class="kpi-container"><small class="fw-bold text-muted text-uppercase">Growth %</small><div id="kpiPct" class="kpi-val fade-transition" style="font-size: 1.8rem;">0%</div></div></div>
+    <div class="header-right">
+        <div class="d-flex align-items-center glass-panel px-3 py-2 py-md-1">
+            <span class="small fw-bold text-muted me-2">Metric:</span>
+            <select id="metric" class="form-select form-select-sm border-0 bg-transparent fw-bold text-success py-0 ps-0 pe-4" style="width:auto; cursor:pointer;" onchange="runAnalysis()">
+                <option value="Sales Value">Sales (AED)</option>
+                <option value="Sold Qty">Sold Quantity</option>
+            </select>
+            <div style="width: 1px; height: 16px; background: var(--glass-border); margin: 0 12px;"></div>
+            <button class="btn btn-sm btn-dark rounded-pill fw-bold px-3 shadow-sm" onclick="toggleTheme()" id="themeBtn" style="font-size: 11px; white-space: nowrap;">Dark Mode</button>
+        </div>
+        <input type="file" id="upload" class="form-control form-control-sm" style="width:100%; max-width:220px;">
     </div>
+</div>
 
-    <div class="row g-4">
-        <div class="col-md-12">
-            
-            <div class="ai-card">
-                <div class="d-flex align-items-center mb-2">
-                    <span class="fs-4 me-2">🔍</span>
-                    <h6 class="fw-bold mb-0 text-success">LuLu Smart Ask Agent</h6>
+<div class="container-fluid px-2 px-md-4 pb-5 mb-5" id="dashboard" style="display:none">
+    <div class="row g-3 g-md-4">
+        
+        <!-- SIDEBAR -->
+        <div class="col-12 col-lg-4 col-xl-3 transition-layout" id="sidebarCol">
+            <div class="bento-glass p-3 p-md-4 sidebar-sticky">
+                <h5 class="fw-bold mb-4 d-flex align-items-center" style="color: var(--lulu-green);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                    Master Controls
+                </h5>
+                
+                <h6 class="fw-bold mb-3">Time Selection</h6>
+                <div class="glass-panel p-3 mb-3">
+                    <label class="small fw-bold text-success mb-2">Target Period (A)</label>
+                    <div class="mb-2"><select id="selYear" class="form-select cascade-select" onchange="renderMonthSelection()"></select></div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_TargetMonth">Select Months</button>
+                        <div class="dropdown-menu dropdown-menu-custom shadow" id="f_TargetMonth"></div>
+                    </div>
                 </div>
-                <div class="input-group mt-2 shadow-sm rounded-pill position-relative">
-                    <input type="text" id="aiSearchBox" class="form-control ai-search-input" placeholder="Type to search (e.g., 'top 10 brands in rice', 'apple', 'electronics')..." autocomplete="off">
-                    <button class="btn ai-btn-search" onclick="processSmartSearch()">Search</button>
-                    <button class="btn btn-outline-danger ai-btn-clear" onclick="clearSmartSearch()">Clear</button>
-                    
-                    <ul id="autocomplete-list" class="list-group position-absolute w-100 shadow rounded-4 border-0" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; top: 110%;"></ul>
+
+                <div id="customTimeBox" class="glass-panel p-3 mb-3" style="display: none;">
+                    <label class="small fw-bold text-warning mb-2" style="color: #d4a106 !important;">Comparison Period (B)</label>
+                    <div class="mb-2"><select id="selPrevYear" class="form-select cascade-select" onchange="renderPrevMonthSelection()"></select></div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_PrevMonth">Select Months</button>
+                        <div class="dropdown-menu dropdown-menu-custom shadow" id="f_PrevMonth"></div>
+                    </div>
+                </div>
+                
+                <hr class="my-4" style="border-color: var(--glass-border);">
+                <h6 class="fw-bold mb-3">Dynamic Hierarchy</h6>
+                
+                <div class="mb-3" id="filter_Country_container">
+                    <label class="small fw-bold text-muted mb-1">1. Country</label>
+                    <div class="dropdown"><button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_Country">All Countries</button><div class="dropdown-menu dropdown-menu-custom shadow" id="f_Country"></div></div>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted mb-1">2. Department</label>
+                    <div class="dropdown"><button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_Department">All Departments</button><div class="dropdown-menu dropdown-menu-custom shadow" id="f_Department"></div></div>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted mb-1">3. Category</label>
+                    <div class="dropdown"><button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" id="btn_Category" data-value="All">All Categories</button><div class="dropdown-menu dropdown-menu-custom shadow" id="f_Category"></div></div>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted mb-1">4. Material Group</label>
+                    <div class="dropdown"><button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" id="btn_MaterialGroup" data-value="All">All Material Groups</button><div class="dropdown-menu dropdown-menu-custom shadow" id="f_MaterialGroup"></div></div>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted mb-1">5. Brand</label>
+                    <div class="dropdown"><button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" id="btn_Brand" data-value="All">All Brands</button><div class="dropdown-menu dropdown-menu-custom shadow" id="f_Brand"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD -->
+        <div class="col-12 col-lg-8 col-xl-9 transition-layout" id="mainCol">
+            
+            <div class="row g-3 g-md-4 mb-4">
+                <div class="col-6 col-md-6 col-xl-3"><div class="kpi-container bento-glass"><div class="kpi-label" id="lblKpiCur">Target Period</div><div id="kpiCurrent" class="kpi-val fade-transition">0</div></div></div>
+                <div class="col-6 col-md-6 col-xl-3"><div class="kpi-container bento-glass"><div class="kpi-label" id="lblKpiPrev">Comparison Period</div><div id="kpiPrev" class="kpi-val fade-transition">0</div></div></div>
+                <div class="col-6 col-md-6 col-xl-3"><div class="kpi-container bento-glass"><div class="kpi-label">Variance Value</div><div id="kpiVar" class="kpi-val fade-transition">0</div></div></div>
+                <div class="col-6 col-md-6 col-xl-3"><div class="kpi-container bento-glass"><div class="kpi-label">Growth Trend</div><div id="kpiPct" class="kpi-val fade-transition" style="font-size: 1.8rem;">0%</div></div></div>
+            </div>
+
+            <div class="ai-card bento-glass">
+                <div class="d-flex align-items-center mb-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-success me-2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    <h6 class="fw-bold mb-0 text-success">Smart Ask Agent</h6>
+                </div>
+                <div class="input-group mt-3 shadow-sm rounded-pill position-relative">
+                    <input type="text" id="aiSearchBox" class="form-control ai-search-input" placeholder="Ask anything (e.g., 'top 10 brands')..." autocomplete="off">
+                    <button class="btn ai-btn-search" onclick="processSmartSearch()">Analyze</button>
+                    <button class="btn btn-outline-danger ai-btn-clear" style="border-width:1px;" onclick="clearSmartSearch()">Clear</button>
+                    <ul id="autocomplete-list" class="list-group position-absolute w-100 shadow-lg rounded-4 border-0 bento-glass" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; top: 110%;"></ul>
                 </div>
                 <div id="aiSuggestions" class="mt-3 d-flex flex-wrap gap-2"></div>
             </div>
 
-            <div class="matrix-card p-4 mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="fw-bold text-muted mb-0">Comparative Performance Chart</h6>
-                    <select id="chartTypeSelector" class="form-select form-select-sm w-auto fw-bold" style="background: var(--input-bg); color: var(--text-main); border-color: var(--input-border);" onchange="updateChartType()">
+            <div class="matrix-card bento-glass p-3 p-md-4">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-2">
+                    <h6 class="fw-bold mb-0" style="color: var(--text-main);">Comparative Performance</h6>
+                    <select id="chartTypeSelector" class="form-select form-select-sm w-auto fw-bold" style="background: var(--drill-bg); color: var(--text-main); border-color: var(--glass-border); border-radius: 10px;" onchange="updateChartType()">
                         <option value="bar">Bar Chart</option>
                         <option value="line">Line Chart</option>
                         <option value="area">Area Chart</option>
                     </select>
                 </div>
-                <div id="mainChart" class="fade-transition"></div>
+                <div class="chart-scroll-wrapper">
+                    <div id="mainChart" class="fade-transition"></div>
+                </div>
             </div>
 
-            <div class="matrix-card">
-                <div class="table-responsive">
-                    <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center" id="drillDownHeader" style="display:none !important; border-color: var(--border-color) !important;">
-                        <span class="fw-bold text-dark ps-2 fs-6" id="drillDownTitle"></span>
-                        <div>
-                            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold me-2" onclick="stepBackDrill()" id="btnStepBack">🔙 Step Back</button>
-                            <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="clearAllDrill()">🏠 Reset View</button>
+            <div class="matrix-card bento-glass">
+                <div class="p-3 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3" style="background: transparent; border-color: var(--glass-border) !important;">
+                    <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
+                        <span class="fw-bold text-muted small text-uppercase flex-shrink-0">Table View</span>
+                        <div class="d-flex align-items-center gap-1 w-100">
+                            <select id="tableFilterMode" class="form-select form-select-sm fw-bold border-0 text-success" style="width:100px; background: var(--drill-bg); border-radius: 10px;" onchange="toggleTableCount()">
+                                <option value="all" selected>Show All</option>
+                                <option value="top">Top</option>
+                                <option value="bottom">Bottom</option>
+                            </select>
+                            <input type="number" id="tableFilterCount" class="form-control form-control-sm fw-bold border-0 text-success text-center" style="width:60px; background: var(--drill-bg); border-radius: 10px;" value="" placeholder="#" min="1" disabled onchange="runAnalysis()" onkeyup="if(event.key === 'Enter') runAnalysis()">
                         </div>
                     </div>
-                    <table class="table mb-0 align-middle table-hover">
+                </div>
+
+                <div class="table-responsive">
+                    <div class="p-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2" id="drillDownHeader" style="display:none !important; background: var(--table-hover); border-color: var(--glass-border) !important;">
+                        <span class="fw-bold ps-2 fs-6" id="drillDownTitle" style="color: var(--text-main);"></span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3 bg-transparent" style="border-color: var(--glass-border); color: var(--text-main);" onclick="stepBackDrill()" id="btnStepBack">Back</button>
+                            <button class="btn btn-sm btn-danger rounded-pill fw-bold px-3" onclick="clearAllDrill()">Reset</button>
+                        </div>
+                    </div>
+                    <table class="table align-middle table-hover">
                         <thead>
                             <tr>
-                                <th class="ps-4" id="thDimName">Performance Dimension</th>
+                                <th class="ps-3 ps-md-4" id="thDimName">Dimension</th>
                                 <th class="num sortable" onclick="toggleSort('cur')" id="thCur">Target <span class="sort-icon" id="icn-cur">▼</span></th>
                                 <th class="num sortable" onclick="toggleSort('prev')" id="thPrev">Comparison <span class="sort-icon" id="icn-prev"></span></th>
                                 <th class="num sortable" onclick="toggleSort('var')">Variance <span class="sort-icon" id="icn-var"></span></th>
-                                <th class="num pe-4 sortable" onclick="toggleSort('pct')">Trend % <span class="sort-icon" id="icn-pct"></span></th>
+                                <th class="num pe-3 pe-md-4 sortable" onclick="toggleSort('pct')">Trend <span class="sort-icon" id="icn-pct"></span></th>
                             </tr>
                         </thead>
                         <tbody id="dataTable" class="fade-transition"></tbody>
@@ -276,19 +340,27 @@ const drillHierarchy = ["Country", "Department", "Category", "Material Group", "
 let sortConfig = { col: 'cur', dir: 'desc' };
 let currentAggLevel = "Department";
 let drillDownStack = []; 
-let searchConfig = { isActive: false, limit: 100, forceLevel: null, keyword: null };
+let searchConfig = { isActive: false, limit: null, forceLevel: null, keyword: null };
 let suggestedQueries = []; 
+
+// SMART INITIALIZATION FOR MOBILE
+window.addEventListener('load', () => {
+    if (window.innerWidth < 992) {
+        document.getElementById('sidebarCol').classList.add('d-none');
+        document.getElementById('mainCol').className = 'col-12 transition-layout';
+    }
+});
 
 function toggleTheme() {
     const body = document.body;
     const isDark = body.getAttribute('data-theme') === 'dark';
     if (isDark) {
         body.removeAttribute('data-theme');
-        document.getElementById('themeBtn').innerText = '🌙 Dark Mode';
+        document.getElementById('themeBtn').innerText = 'Dark Mode';
         updateChartTheme('light');
     } else {
         body.setAttribute('data-theme', 'dark');
-        document.getElementById('themeBtn').innerText = '☀️ Light Mode';
+        document.getElementById('themeBtn').innerText = 'Light Mode';
         updateChartTheme('dark');
     }
 }
@@ -298,9 +370,24 @@ function updateChartTheme(themeMode) {
         chart.updateOptions({
             theme: { mode: themeMode },
             chart: { background: 'transparent' },
-            colors: themeMode === 'dark' ? ['#00e676', '#7f8fa6'] : ['#008334', '#b2bec3']
+            colors: themeMode === 'dark' ? ['#30d158', '#48484a'] : ['#00A642', '#d1d1d6']
         });
     }
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebarCol');
+    const main = document.getElementById('mainCol');
+    
+    if (sidebar.classList.contains('d-none')) {
+        sidebar.classList.remove('d-none');
+        main.className = 'col-12 col-lg-8 col-xl-9 transition-layout';
+    } else {
+        sidebar.classList.add('d-none');
+        main.className = 'col-12 transition-layout';
+    }
+    
+    if (chart) { setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300); }
 }
 
 function formatValue(value, isCurrency, isGraphic = false) {
@@ -342,6 +429,9 @@ upload.onchange = e => {
                 });
             }
 
+            const hasCountry = rows.some(r => r.Country && String(r.Country).trim() !== "");
+            document.getElementById('filter_Country_container').style.display = hasCountry ? 'block' : 'none';
+
             if(!chart) initChart();
             buildTimeMap();
             initUI();
@@ -354,6 +444,12 @@ upload.onchange = e => {
             generateRecommendations();
             
             document.getElementById('dashboard').style.display = 'block';
+            
+            // Auto close sidebar on mobile after upload
+            if (window.innerWidth < 992) {
+                document.getElementById('sidebarCol').classList.add('d-none');
+                document.getElementById('mainCol').className = 'col-12 transition-layout';
+            }
         } catch (err) { alert("Error reading Excel file."); }
     };
     reader.readAsArrayBuffer(e.target.files[0]);
@@ -363,11 +459,13 @@ function buildSearchableTerms() {
     const depts = [...new Set(rows.map(r => r.Department))].filter(Boolean);
     const cats = [...new Set(rows.map(r => r.Category))].filter(Boolean);
     const brands = [...new Set(rows.map(r => r.Brand))].filter(Boolean);
+    const countries = [...new Set(rows.map(r => r.Country))].filter(Boolean);
     
     suggestedQueries = [];
-    brands.forEach(b => suggestedQueries.push({ text: `Top 10 products in ${b}`, type: 'Brand Filter' }));
-    cats.forEach(c => suggestedQueries.push({ text: `Top 5 brands in ${c}`, type: 'Category Filter' }));
-    depts.forEach(d => suggestedQueries.push({ text: `Top categories in ${d}`, type: 'Department Filter' }));
+    if(countries.length > 0) countries.forEach(c => suggestedQueries.push({ text: `Top departments in ${c}`, type: 'Country' }));
+    brands.forEach(b => suggestedQueries.push({ text: `Top 10 products in ${b}`, type: 'Brand' }));
+    cats.forEach(c => suggestedQueries.push({ text: `Top 5 brands in ${c}`, type: 'Category' }));
+    depts.forEach(d => suggestedQueries.push({ text: `Top categories in ${d}`, type: 'Department' }));
 }
 
 document.getElementById('aiSearchBox').addEventListener('input', function(e) {
@@ -386,10 +484,10 @@ document.getElementById('aiSearchBox').addEventListener('input', function(e) {
         list.style.display = 'block';
         matches.forEach(match => {
             const li = document.createElement('li');
-            li.className = 'list-group-item list-group-item-action autocomplete-item border-0 border-bottom';
+            li.className = 'list-group-item list-group-item-action autocomplete-item p-3';
             const regex = new RegExp(`(${val})`, "gi");
             const highlightedText = match.text.replace(regex, "<span class='text-success fw-bold'>$1</span>");
-            li.innerHTML = `<span>🔍 ${highlightedText}</span> <span class="badge bg-light text-muted float-end" style="font-size:10px;">${match.type}</span>`;
+            li.innerHTML = `<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2 text-muted"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> ${highlightedText}</span> <span class="badge float-end" style="background: var(--drill-bg); color: var(--text-main); font-weight:600;">${match.type}</span>`;
             li.onclick = () => {
                 document.getElementById('aiSearchBox').value = match.text;
                 list.style.display = 'none';
@@ -414,16 +512,18 @@ function generateRecommendations() {
     const depts = [...new Set(rows.map(r => r.Department))].filter(Boolean);
     const cats = [...new Set(rows.map(r => r.Category))].filter(Boolean);
     const brands = [...new Set(rows.map(r => r.Brand))].filter(Boolean);
+    const countries = [...new Set(rows.map(r => r.Country))].filter(Boolean);
     const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
     
     let suggestions = [];
+    if (countries.length > 0) suggestions.push(`Top 5 departments in ${getRandom(countries)}`);
     if (brands.length > 0) suggestions.push(`Top 10 products in ${getRandom(brands)}`);
     if (cats.length > 0) suggestions.push(`Top 5 brands in ${getRandom(cats)}`);
     if (depts.length > 0) suggestions.push(`Top categories in ${getRandom(depts)}`);
     suggestions.push(`Top 50 items`);
 
     document.getElementById('aiSuggestions').innerHTML = suggestions.map(s => 
-        `<span class="ai-suggestion" onclick="applySuggestion('${s.replace(/'/g, "\\'")}')">✨ ${s}</span>`
+        `<span class="ai-suggestion" onclick="applySuggestion('${s.replace(/'/g, "\\'")}')">${s}</span>`
     ).join("");
 }
 
@@ -458,28 +558,64 @@ function initUI() {
     renderPrevMonthSelection();
 }
 
-// --- NEW MULTI-MONTH RENDER LOGIC ---
+let filterSearchTimeout;
+function filterDropdownSearch(input) {
+    clearTimeout(filterSearchTimeout);
+    filterSearchTimeout = setTimeout(() => {
+        const filter = input.value.toLowerCase();
+        const container = input.closest('.dropdown-menu-custom');
+        
+        const labels = container.querySelectorAll('label');
+        for(let i=0; i<labels.length; i++) {
+            const text = labels[i].textContent.toLowerCase();
+            labels[i].style.display = text.includes(filter) ? 'block' : 'none';
+        }
+        
+        const items = container.querySelectorAll('.dropdown-item-custom');
+        for(let i=0; i<items.length; i++) {
+            if(items[i].textContent.includes("-- All")) continue;
+            const text = items[i].textContent.toLowerCase();
+            items[i].style.display = text.includes(filter) ? 'block' : 'none';
+        }
+    }, 150); 
+}
+
+function selectAllMulti(id, isTime = false) {
+    document.querySelectorAll(`#f_${id} input[type="checkbox"]`).forEach(cb => cb.checked = true);
+    if(isTime) { updateTimeBtnText(id); runAnalysis(); }
+    else { updateMultiBtnText(id); cascadeUpdate(id === 'Country' ? 1 : 2); }
+}
+
+function clearAllMulti(id, isTime = false) {
+    document.querySelectorAll(`#f_${id} input[type="checkbox"]`).forEach(cb => cb.checked = false);
+    if(isTime) { updateTimeBtnText(id); runAnalysis(); }
+    else { updateMultiBtnText(id); cascadeUpdate(id === 'Country' ? 1 : 2); }
+}
+
 function updateTimeBtnText(type) {
     const checked = Array.from(document.querySelectorAll(`#f_${type} input:checked`)).map(cb => cb.value);
     const btn = document.getElementById(`btn_${type}`);
     if (checked.length === 0) btn.innerText = `Select Month`;
     else if (checked.length === 1) btn.innerText = checked[0];
-    else btn.innerText = `${checked.length} Months Selected`;
+    else btn.innerText = `${checked.length} Selected`;
 }
 
 function renderMonthSelection() {
     const y = document.getElementById('selYear').value;
     const container = document.getElementById('f_TargetMonth');
-    if (!yearMonthMap[y]) {
-        container.innerHTML = '';
-        updateTimeBtnText('TargetMonth');
-        runAnalysis();
-        return;
-    }
+    if (!yearMonthMap[y]) { container.innerHTML = ''; updateTimeBtnText('TargetMonth'); runAnalysis(); return; }
     const available = [...yearMonthMap[y]].sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-    container.innerHTML = available.map((m, i) => 
-        `<label><input type="checkbox" value="${m}" ${i === available.length - 1 ? 'checked' : ''} onchange="updateTimeBtnText('TargetMonth'); runAnalysis()"> ${m}</label>`
-    ).join("");
+    
+    let html = `<div class="p-2 border-bottom sticky-top" style="background: var(--glass-bg); backdrop-filter: blur(10px); z-index: 10; top: 0; border-color: var(--glass-border) !important;">
+        <div class="d-flex justify-content-between mb-2">
+            <button class="btn btn-sm btn-outline-success py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="selectAllMulti('TargetMonth', true)">Select All</button>
+            <button class="btn btn-sm btn-outline-danger py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="clearAllMulti('TargetMonth', true)">Clear All</button>
+        </div>
+        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search Months..." onkeyup="filterDropdownSearch(this)">
+    </div><div class="p-2">`;
+    
+    html += available.map((m, i) => `<label><input type="checkbox" value="${m}" ${i === available.length - 1 ? 'checked' : ''} onchange="updateTimeBtnText('TargetMonth'); runAnalysis()"> ${m}</label>`).join("");
+    container.innerHTML = html + `</div>`;
     updateTimeBtnText('TargetMonth');
     runAnalysis();
 }
@@ -487,25 +623,27 @@ function renderMonthSelection() {
 function renderPrevMonthSelection() {
     const y = document.getElementById('selPrevYear').value;
     const container = document.getElementById('f_PrevMonth');
-    if (!yearMonthMap[y]) {
-        container.innerHTML = '';
-        updateTimeBtnText('PrevMonth');
-        if (mode === 'Custom') runAnalysis();
-        return;
-    }
+    if (!yearMonthMap[y]) { container.innerHTML = ''; updateTimeBtnText('PrevMonth'); if (mode === 'Custom') runAnalysis(); return; }
     const available = [...yearMonthMap[y]].sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-    container.innerHTML = available.map((m, i) => 
-        `<label><input type="checkbox" value="${m}" ${i === available.length - 1 ? 'checked' : ''} onchange="updateTimeBtnText('PrevMonth'); runAnalysis()"> ${m}</label>`
-    ).join("");
+    
+    let html = `<div class="p-2 border-bottom sticky-top" style="background: var(--glass-bg); backdrop-filter: blur(10px); z-index: 10; top: 0; border-color: var(--glass-border) !important;">
+        <div class="d-flex justify-content-between mb-2">
+            <button class="btn btn-sm btn-outline-success py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="selectAllMulti('PrevMonth', true)">Select All</button>
+            <button class="btn btn-sm btn-outline-danger py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="clearAllMulti('PrevMonth', true)">Clear All</button>
+        </div>
+        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search Months..." onkeyup="filterDropdownSearch(this)">
+    </div><div class="p-2">`;
+
+    html += available.map((m, i) => `<label><input type="checkbox" value="${m}" ${i === available.length - 1 ? 'checked' : ''} onchange="updateTimeBtnText('PrevMonth'); runAnalysis()"> ${m}</label>`).join("");
+    container.innerHTML = html + `</div>`;
     updateTimeBtnText('PrevMonth');
     if(mode === 'Custom') runAnalysis();
 }
 
 function setMode(m) {
     mode = m;
-    document.getElementById('btnMoM').classList.toggle('active', m === 'MoM');
-    document.getElementById('btnYoY').classList.toggle('active', m === 'YoY');
-    document.getElementById('btnCustom').classList.toggle('active', m === 'Custom');
+    document.querySelectorAll('.nav-pill-lulu').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn' + m).classList.add('active');
     document.getElementById('customTimeBox').style.display = (m === 'Custom') ? 'block' : 'none';
     runAnalysis();
 }
@@ -516,7 +654,6 @@ function processSmartSearch() {
     if(!query) { clearSmartSearch(); return; }
 
     searchConfig.isActive = true;
-    searchConfig.limit = 100;
     searchConfig.forceLevel = null;
     searchConfig.keyword = null;
     drillDownStack = []; 
@@ -524,11 +661,15 @@ function processSmartSearch() {
     const limitMatch = query.match(/top\s+(\d+)/);
     if(limitMatch) {
         searchConfig.limit = parseInt(limitMatch[1]);
+        document.getElementById('tableFilterCount').value = searchConfig.limit;
+        document.getElementById('tableFilterMode').value = 'top';
+        document.getElementById('tableFilterCount').disabled = false;
         query = query.replace(limitMatch[0], ''); 
     }
 
-    if (query.includes('brand')) { searchConfig.forceLevel = 'Brand'; query = query.replace(/brands?/g, ''); }
-    else if (query.includes('product') || query.includes('item')) { searchConfig.forceLevel = 'Product Name'; query = query.replace(/products?|items?/g, ''); }
+    if (query.includes('country') || query.includes('countrie')) { searchConfig.forceLevel = 'Country'; query = query.replace(/countries?|country/g, ''); }
+    else if (query.includes('brand')) { searchConfig.forceLevel = 'Brand'; query = query.replace(/brands?/g, ''); }
+    else if (query.includes('product') || query.includes('item') || query.includes('id') || query.includes('sku')) { searchConfig.forceLevel = 'Product Name'; query = query.replace(/products?|items?|id|sku/g, ''); }
     else if (query.includes('categor')) { searchConfig.forceLevel = 'Category'; query = query.replace(/categories|category/g, ''); }
     else if (query.includes('group') || query.includes('material')) { searchConfig.forceLevel = 'Material Group'; query = query.replace(/groups?|materials?/g, ''); }
     else if (query.includes('dept') || query.includes('department')) { searchConfig.forceLevel = 'Department'; query = query.replace(/departments?|depts?/g, ''); }
@@ -542,8 +683,26 @@ function processSmartSearch() {
 function clearSmartSearch() {
     document.getElementById('aiSearchBox').value = '';
     document.getElementById('autocomplete-list').style.display = 'none';
-    searchConfig = { isActive: false, limit: 100, forceLevel: null, keyword: null };
+    searchConfig = { isActive: false, limit: null, forceLevel: null, keyword: null };
     drillDownStack = [];
+    
+    document.getElementById('tableFilterMode').value = 'all';
+    document.getElementById('tableFilterCount').value = '';
+    document.getElementById('tableFilterCount').disabled = true;
+
+    runAnalysis();
+}
+
+function toggleTableCount() {
+    const mode = document.getElementById('tableFilterMode').value;
+    const input = document.getElementById('tableFilterCount');
+    if(mode === 'all') {
+        input.disabled = true;
+        input.value = '';
+    } else {
+        input.disabled = false;
+        if(!input.value) input.value = 10; 
+    }
     runAnalysis();
 }
 
@@ -562,7 +721,17 @@ function updateMultiBtnText(level) {
 
 function populateMultiSelect(level, dataSet) {
     const unique = [...new Set(dataSet.map(r => r[level]))].filter(Boolean).sort();
-    document.getElementById(`f_${level}`).innerHTML = unique.map(v => `<label><input type="checkbox" value="${v}" onchange="updateMultiBtnText('${level}')"> ${v}</label>`).join("");
+    
+    let html = `<div class="p-2 border-bottom sticky-top" style="background: var(--glass-bg); backdrop-filter: blur(10px); z-index: 10; top: 0; border-color: var(--glass-border) !important;">
+        <div class="d-flex justify-content-between mb-2">
+            <button class="btn btn-sm btn-outline-success py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="selectAllMulti('${level}', false)">Select All</button>
+            <button class="btn btn-sm btn-outline-danger py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="clearAllMulti('${level}', false)">Clear All</button>
+        </div>
+        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search ${level}..." onkeyup="filterDropdownSearch(this)">
+    </div><div class="p-2">`;
+
+    html += unique.map(v => `<label><input type="checkbox" value="${v}" onchange="updateMultiBtnText('${level}')"> ${v}</label>`).join("");
+    document.getElementById(`f_${level}`).innerHTML = html + `</div>`;
     updateMultiBtnText(level);
 }
 
@@ -577,18 +746,46 @@ function getFilteredDataForLevel(levelIndex) {
         if (depts.length > 0) d = d.filter(r => depts.includes(r.Department));
     }
     for(let i=2; i<levelIndex; i++) {
-        const val = document.getElementById(`f_${hierarchyConfig[i].replace(/\s+/g,'')}`).value;
-        if(val !== "All") d = d.filter(r => r[hierarchyConfig[i]] === val);
+        const btn = document.getElementById(`btn_${hierarchyConfig[i].replace(/\s+/g,'')}`);
+        const val = btn.getAttribute('data-value') || "All";
+        if (val !== "All") d = d.filter(r => r[hierarchyConfig[i]] === val);
     }
     return d;
 }
 
 function populateSingleSelect(levelName, dataSet) {
     const el = document.getElementById(`f_${levelName.replace(/\s+/g,'')}`);
-    const currentVal = el.value;
+    const btn = document.getElementById(`btn_${levelName.replace(/\s+/g,'')}`);
+    let currentVal = btn.getAttribute('data-value') || "All";
+    
     const unique = [...new Set(dataSet.map(r => r[levelName]))].filter(Boolean).sort();
-    el.innerHTML = `<option value="All">-- All ${levelName}s --</option>` + unique.map(v => `<option value="${v}">${v}</option>`).join("");
-    if(unique.includes(currentVal)) el.value = currentVal;
+    
+    let html = `<div class="p-2 border-bottom sticky-top" style="background: var(--glass-bg); backdrop-filter: blur(10px); z-index: 10; top: 0; border-color: var(--glass-border) !important;">
+        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search ${levelName}..." onkeyup="filterDropdownSearch(this)">
+    </div><div class="p-2">`;
+    
+    html += `<div class="dropdown-item-custom mb-1" onclick="selectSingle('${levelName}', 'All', 'All ${levelName}s')">-- All ${levelName}s --</div>`;
+    html += unique.map(v => `<div class="dropdown-item-custom mb-1" onclick="selectSingle('${levelName}', '${v.replace(/'/g, "\\'")}', '${v.replace(/'/g, "\\'")}')">${v}</div>`).join("");
+    
+    el.innerHTML = html + `</div>`;
+    
+    if(!unique.includes(currentVal) && currentVal !== "All") {
+        selectSingle(levelName, "All", `All ${levelName}s`, true);
+    }
+}
+
+function selectSingle(levelName, val, display, silent = false) {
+    const btn = document.getElementById(`btn_${levelName.replace(/\s+/g,'')}`);
+    btn.innerText = display;
+    btn.setAttribute('data-value', val);
+    const bsDropdown = bootstrap.Dropdown.getInstance(btn) || bootstrap.Dropdown.getOrCreateInstance(btn);
+    if(bsDropdown) bsDropdown.hide();
+    
+    if(!silent) {
+        const levelIndex = hierarchyConfig.indexOf(levelName);
+        if(levelIndex >= 0) cascadeUpdate(levelIndex + 1);
+        else runAnalysis();
+    }
 }
 
 function cascadeUpdate(changedLevelIndex) {
@@ -633,7 +830,6 @@ function clearAllDrill() {
     else runAnalysis();
 }
 
-// --- NEW MULTI-MONTH ANALYSIS LOGIC ---
 function runAnalysis() {
     const curYear = document.getElementById('selYear').value;
     const metric = document.getElementById('metric').value;
@@ -666,32 +862,27 @@ function runAnalysis() {
         prevLabels = prevMonths.map(m => `${m} ${prevYear}`);
     }
 
-    // Dynamic Header Formulation
     const formatTimeLabel = (months, y) => {
         if (months.length === 0) return `No Selection`;
         if (months.length === 1) return `${months[0]} ${y}`;
         if (months.length <= 3) return `${months.join('/')} ${y}`;
-        return `${months.length} Months ${y}`;
+        return `${months.length} Months`;
     };
 
     let displayCurLabel = formatTimeLabel(targetMonths, curYear);
     let displayPrevLabel = mode === 'MoM' && targetMonths.length > 0 
-        ? (targetMonths.length === 1 ? prevLabels[0] : `${targetMonths.length} Prev Months`) 
+        ? (targetMonths.length === 1 ? prevLabels[0] : `${targetMonths.length} Prev Mths`) 
         : formatTimeLabel(prevMonths, prevYear);
 
     let d = getFilteredDataForLevel(hierarchyConfig.length);
 
     if (searchConfig.isActive && searchConfig.keyword) {
         const kw = searchConfig.keyword;
-        d = d.filter(r => {
-            return Object.values(r).some(val => String(val).toLowerCase().includes(kw));
-        });
+        d = d.filter(r => { return Object.values(r).some(val => String(val).toLowerCase().includes(kw)); });
     }
 
     if (drillDownStack.length > 0) {
-        drillDownStack.forEach(drill => {
-            d = d.filter(r => r[drill.dimension] === drill.value);
-        });
+        drillDownStack.forEach(drill => { d = d.filter(r => r[drill.dimension] === drill.value); });
     }
 
     if (drillDownStack.length > 0) {
@@ -701,13 +892,25 @@ function runAnalysis() {
     } else if (searchConfig.isActive && searchConfig.forceLevel) {
         currentAggLevel = searchConfig.forceLevel;
     } else {
-        currentAggLevel = "Department";
-        const depts = getMultiSelectValues('Department');
-        if (depts.length > 0) currentAggLevel = "Category";
+        const hasCountryData = rows.some(r => r.Country && String(r.Country).trim() !== "");
+        currentAggLevel = hasCountryData ? "Country" : "Department";
+        
+        if (currentAggLevel === "Country") {
+            const countries = getMultiSelectValues('Country');
+            if (countries.length > 0) currentAggLevel = "Department";
+        }
+        
+        if (currentAggLevel === "Department") {
+            const depts = getMultiSelectValues('Department');
+            if (depts.length > 0) currentAggLevel = "Category";
+        }
         
         for (let i = 2; i < hierarchyConfig.length; i++) {
-            const val = document.getElementById(`f_${hierarchyConfig[i].replace(/\s+/g,'')}`).value;
-            if (val !== "All") currentAggLevel = hierarchyConfig[i + 1] || hierarchyConfig[i];
+            const btn = document.getElementById(`btn_${hierarchyConfig[i].replace(/\s+/g,'')}`);
+            const val = btn.getAttribute('data-value') || "All";
+            if (val !== "All" && hierarchyConfig.indexOf(currentAggLevel) <= i) {
+                currentAggLevel = hierarchyConfig[i + 1] || hierarchyConfig[i];
+            }
         }
     }
 
@@ -716,14 +919,14 @@ function runAnalysis() {
 
     if (drillDownStack.length > 0) {
         drillHeader.style.setProperty('display', 'flex', 'important');
-        const breadcrumbs = drillDownStack.map(b => b.value).join(' > ');
+        const breadcrumbs = drillDownStack.map(b => b.value).join(' <span class="text-muted mx-1">/</span> ');
         let searchContext = (searchConfig.isActive && document.getElementById('aiSearchBox').value) 
-            ? ` <small class="text-muted fw-normal ms-2">(Search: '${document.getElementById('aiSearchBox').value}')</small>` : '';
-        document.getElementById('drillDownTitle').innerHTML = `Viewing: <span class="text-success">${breadcrumbs}</span>${searchContext}`;
+            ? ` <span class="badge ms-2" style="background: var(--glass-border); color: var(--text-main);">Search: '${document.getElementById('aiSearchBox').value}'</span>` : '';
+        document.getElementById('drillDownTitle').innerHTML = `Path: ${breadcrumbs}${searchContext}`;
         document.getElementById('btnStepBack').style.display = 'inline-block';
     } else if (searchConfig.isActive) {
         drillHeader.style.setProperty('display', 'flex', 'important');
-        document.getElementById('drillDownTitle').innerHTML = `🔍 AI Search applied: <span class="text-success">${document.getElementById('aiSearchBox').value}</span>`;
+        document.getElementById('drillDownTitle').innerHTML = `🔍 AI Result: <span class="text-success">${document.getElementById('aiSearchBox').value}</span>`;
         document.getElementById('btnStepBack').style.display = 'none';
     } else {
         drillHeader.style.setProperty('display', 'none', 'important');
@@ -731,7 +934,13 @@ function runAnalysis() {
 
     const map = {};
     d.forEach(r => {
-        const k = r[currentAggLevel] || "Unknown Item";
+        let k = r[currentAggLevel] || "Unknown Item";
+        
+        if (currentAggLevel === "Product Name") {
+            const pid = r["Product ID"] || r["ProductID"] || r["Item Code"] || r["Material"] || r["Article"];
+            if (pid) k = `${pid} - ${k}`;
+        }
+        
         if(!map[k]) map[k] = { cur: 0, prev: 0 };
         const rowDate = r["Calendar Year/Month"];
         if(curLabels.includes(rowDate)) map[k].cur += (+r[metric] || 0);
@@ -792,14 +1001,27 @@ function updateDashboard(data, metric, curLabel, prevLabel) {
     document.getElementById('kpiPct').innerText = pct + '%';
     
     const isDark = document.body.getAttribute('data-theme') === 'dark';
-    const successColor = isDark ? '#00e676' : '#2e7d32';
-    const dangerColor = isDark ? '#ff5252' : '#d32f2f';
+    const successColor = isDark ? 'var(--success)' : 'var(--success)';
+    const dangerColor = isDark ? 'var(--danger)' : 'var(--danger)';
     document.getElementById('kpiPct').style.color = vari >= 0 ? successColor : dangerColor;
 
-    const isLastLevel = drillHierarchy.indexOf(currentAggLevel) === drillHierarchy.length - 1;
-    const limit = (searchConfig.isActive && drillDownStack.length === 0) ? searchConfig.limit : 100;
+    const tableMode = document.getElementById('tableFilterMode').value;
+    const countInput = document.getElementById('tableFilterCount').value;
+    let limit = parseInt(countInput);
+    
+    let displayData = [...data];
+    
+    if (tableMode !== 'all' && limit > 0) {
+        if (tableMode === 'bottom') {
+            displayData = displayData.slice(-limit).reverse();
+        } else {
+            displayData = displayData.slice(0, limit);
+        }
+    }
 
-    document.getElementById('dataTable').innerHTML = data.slice(0, limit).map(([name, val]) => {
+    const isLastLevel = drillHierarchy.indexOf(currentAggLevel) === drillHierarchy.length - 1;
+
+    document.getElementById('dataTable').innerHTML = displayData.map(([name, val]) => {
         const d = val.cur - val.prev;
         const p = val.prev ? (d / val.prev * 100).toFixed(1) : 0;
         const safeName = name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
@@ -808,21 +1030,33 @@ function updateDashboard(data, metric, curLabel, prevLabel) {
         const rowClass = canClick ? "clickable-row" : ""; 
 
         return `<tr class="${rowClass}" ${canClick ? `onclick="handleRowClick('${safeName}')"` : ''}>
-            <td class="ps-4 fw-bold text-truncate" style="max-width: 250px;" title="${name}">${name}</td>
+            <td class="ps-3 ps-md-4 fw-bold text-truncate" style="max-width: 280px;" title="${name}">${name}</td>
             <td class="num">${formatValue(val.cur, isCurrency, false)}</td>
-            <td class="num text-muted">${formatValue(val.prev, isCurrency, false)}</td>
-            <td class="num ${d>=0?'up':'down'}">${d>0?'+':''}${formatValue(d, isCurrency, false)}</td>
-            <td class="num pe-4"><span class="status-pill ${d>=0?'bg-up':'bg-down'}">${p}%</span></td>
+            <td class="num text-muted" style="font-weight:500;">${formatValue(val.prev, isCurrency, false)}</td>
+            <td class="num ${d>=0?'text-success':'text-danger'}">${d>0?'+':''}${formatValue(d, isCurrency, false)}</td>
+            <td class="num pe-3 pe-md-4"><span class="status-pill ${d>=0?'bg-up':'bg-down'}">${p}%</span></td>
         </tr>`;
     }).join("");
 
     if (chart && typeof chart.updateOptions === 'function') {
-        const chartLimit = (searchConfig.isActive && drillDownStack.length === 0) ? Math.min(searchConfig.limit, 20) : 8;
-        const topChartData = [...data].sort((a,b)=>b[1].cur - a[1].cur).slice(0, chartLimit); 
+        const chartLimit = (tableMode !== 'all' && limit > 0) ? Math.min(limit, 50) : displayData.length; 
+        const topChartData = [...displayData].slice(0, chartLimit); 
+        
+        const requiredWidth = Math.max(topChartData.length * 60, document.querySelector('.chart-scroll-wrapper').offsetWidth);
+
         chart.updateOptions({
-            xaxis: { categories: topChartData.map(i => i[0].length > 15 ? i[0].substring(0,15)+'...' : i[0]) },
-            yaxis: { labels: { formatter: function(val) { return formatValue(val, isCurrency, true); } } },
-            tooltip: { y: { formatter: function(val) { return formatValue(val, isCurrency, true); } } }, 
+            chart: { width: requiredWidth },
+            xaxis: { 
+                categories: topChartData.map(i => i[0].length > 15 ? i[0].substring(0,15)+'...' : i[0]),
+                labels: { style: { colors: isDark ? '#98989d' : '#86868b', fontFamily: 'Inter' } }
+            },
+            yaxis: { 
+                labels: { 
+                    formatter: function(val) { return formatValue(val, isCurrency, true); },
+                    style: { colors: isDark ? '#98989d' : '#86868b', fontFamily: 'Inter' }
+                } 
+            },
+            grid: { borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
             series: [{ name: curLabel, data: topChartData.map(i => i[1].cur) }, { name: prevLabel, data: topChartData.map(i => i[1].prev) }]
         });
     }
@@ -830,22 +1064,28 @@ function updateDashboard(data, metric, curLabel, prevLabel) {
 
 function initChart() {
     chart = new ApexCharts(document.querySelector("#mainChart"), {
-        chart: { type: 'bar', height: 320, toolbar: {show: false}, fontFamily: 'Poppins', background: 'transparent' },
-        plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
-        colors: ['#008334', '#b2bec3'], 
+        chart: { type: 'bar', height: 320, width: '100%', toolbar: {show: false}, fontFamily: 'Inter', background: 'transparent' },
+        plotOptions: { bar: { borderRadius: 6, columnWidth: '45%' } },
+        colors: ['#00A642', '#86868b'], 
         series: [{ name: 'Current', data: [] }, { name: 'Previous', data: [] }],
         xaxis: { categories: [] },
         dataLabels: { enabled: false },
-        legend: { position: 'top' },
+        legend: { position: 'top', fontFamily: 'Inter', fontWeight: 600 },
         theme: { mode: 'light' },
-        stroke: { show: true, width: 2, colors: ['transparent'] }
+        grid: { strokeDashArray: 4 },
+        stroke: { show: true, width: 3, colors: ['transparent'] }
     });
     chart.render();
 }
 
 function updateChartType() {
     const type = document.getElementById('chartTypeSelector').value;
-    chart.updateOptions({ chart: { type: type } });
+    const isLineOrArea = type === 'line' || type === 'area';
+    chart.updateOptions({ 
+        chart: { type: type },
+        stroke: { show: true, width: isLineOrArea ? 3 : 3, colors: isLineOrArea ? undefined : ['transparent'], curve: 'smooth' },
+        fill: { type: isLineOrArea ? 'gradient' : 'solid', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } }
+    });
 }
 </script>
 </body>
