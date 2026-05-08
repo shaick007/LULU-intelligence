@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuLu BI: Executive Master Dashboard</title>
+    <title>LuLu BI: Executive Master Dashboard V 1.42</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -313,4 +313,367 @@
                                 <option value="top">Top</option>
                                 <option value="bottom">Bottom</option>
                             </select>
-                            <input type="number" id="tableFilterCount"
+                            <input type="number" id="tableFilterCount" class="form-control form-control-sm fw-bold border-0 text-success text-center" style="width:60px; background: var(--drill-bg); border-radius: 10px;" value="" placeholder="#" min="1" disabled onchange="runAnalysis()" onkeyup="if(event.key === 'Enter') runAnalysis()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <div class="p-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2" id="drillDownHeader" style="display:none !important; background: var(--table-hover); border-color: var(--glass-border) !important;">
+                        <span class="fw-bold ps-2 fs-6" id="drillDownTitle" style="color: var(--text-main);"></span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3 bg-transparent" style="border-color: var(--glass-border); color: var(--text-main);" onclick="stepBackDrill()" id="btnStepBack">Back</button>
+                            <button class="btn btn-sm btn-danger rounded-pill fw-bold px-3" onclick="clearAllDrill()">Reset</button>
+                        </div>
+                    </div>
+                    <table class="table align-middle table-hover">
+                        <thead>
+                            <tr>
+                                <th class="ps-3 ps-md-4" id="thDimName">Dimension</th>
+                                <th class="num sortable" onclick="toggleSort('cur')" id="thCur">Target <span class="sort-icon" id="icn-cur">▼</span></th>
+                                <th class="num sortable" onclick="toggleSort('prev')" id="thPrev">Comparison <span class="sort-icon" id="icn-prev"></span></th>
+                                <th class="num sortable" onclick="toggleSort('var')">Variance <span class="sort-icon" id="icn-var"></span></th>
+                                <th class="num pe-3 pe-md-4 sortable" onclick="toggleSort('pct')">Trend <span class="sort-icon" id="icn-pct"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable" class="fade-transition"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- BULLETPROOF STATE MANAGEMENT ---
+let rows = [];
+let yearMonthMap = {};
+let chart = null;
+let mode = 'MoM';
+const monthOrder = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const hierarchyConfig = ["Country", "Department", "Category", "Material Group", "Brand"];
+const drillHierarchy = ["Country", "Department", "Category", "Material Group", "Brand", "Product Name"];
+
+let sortConfig = { col: 'cur', dir: 'desc' };
+let currentAggLevel = "Department";
+let drillDownStack = []; 
+let searchConfig = { isActive: false, limit: null, forceLevel: null, keyword: null };
+let suggestedQueries = []; 
+let hasDailyData = false;
+let filterSearchTimeout = null;
+
+// --- INITIALIZATION ---
+window.addEventListener('load', () => {
+    // Responsive sidebar hide
+    if (window.innerWidth < 992) {
+        document.getElementById('sidebarCol').classList.add('d-none');
+        document.getElementById('mainCol').className = 'col-12 transition-layout';
+    }
+    
+    // Bulletproof Event Listener for file upload
+    const uploadInput = document.getElementById('upload');
+    if (uploadInput) {
+        uploadInput.addEventListener('change', handleFileUpload);
+    }
+});
+
+// --- GLOBAL FUNCTIONS ---
+window.toggleTheme = function() {
+    const body = document.body;
+    const isDark = body.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+        body.removeAttribute('data-theme');
+        document.getElementById('themeBtn').innerText = 'Dark Mode';
+        updateChartTheme('light');
+    } else {
+        body.setAttribute('data-theme', 'dark');
+        document.getElementById('themeBtn').innerText = 'Light Mode';
+        updateChartTheme('dark');
+    }
+};
+
+window.toggleSidebar = function() {
+    const sidebar = document.getElementById('sidebarCol');
+    const main = document.getElementById('mainCol');
+    
+    if (sidebar.classList.contains('d-none')) {
+        sidebar.classList.remove('d-none');
+        main.className = 'col-12 col-lg-8 col-xl-9 transition-layout';
+    } else {
+        sidebar.classList.add('d-none');
+        main.className = 'col-12 transition-layout';
+    }
+    if (chart) { setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300); }
+};
+
+window.setMode = function(m) {
+    mode = m;
+    document.querySelectorAll('.nav-pill-lulu').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn' + m).classList.add('active');
+    document.getElementById('customTimeBox').style.display = (m === 'Custom') ? 'block' : 'none';
+    
+    if(hasDailyData) updateDailyPeriodB();
+    runAnalysis();
+};
+
+window.processSmartSearch = function() {
+    document.getElementById('autocomplete-list').style.display = 'none'; 
+    let query = document.getElementById('aiSearchBox').value.toLowerCase().trim();
+    if(!query) { clearSmartSearch(); return; }
+
+    searchConfig.isActive = true;
+    searchConfig.forceLevel = null;
+    searchConfig.keyword = null;
+    drillDownStack = []; 
+
+    const limitMatch = query.match(/top\s+(\d+)/);
+    if(limitMatch) {
+        searchConfig.limit = parseInt(limitMatch[1]);
+        document.getElementById('tableFilterCount').value = searchConfig.limit;
+        document.getElementById('tableFilterMode').value = 'top';
+        document.getElementById('tableFilterCount').disabled = false;
+        query = query.replace(limitMatch[0], ''); 
+    }
+
+    if (query.includes('country') || query.includes('countrie')) { searchConfig.forceLevel = 'Country'; query = query.replace(/countries?|country/g, ''); }
+    else if (query.includes('brand')) { searchConfig.forceLevel = 'Brand'; query = query.replace(/brands?/g, ''); }
+    else if (query.includes('product') || query.includes('item') || query.includes('id') || query.includes('sku')) { searchConfig.forceLevel = 'Product Name'; query = query.replace(/products?|items?|id|sku/g, ''); }
+    else if (query.includes('categor')) { searchConfig.forceLevel = 'Category'; query = query.replace(/categories|category/g, ''); }
+    else if (query.includes('group') || query.includes('material')) { searchConfig.forceLevel = 'Material Group'; query = query.replace(/groups?|materials?/g, ''); }
+    else if (query.includes('dept') || query.includes('department')) { searchConfig.forceLevel = 'Department'; query = query.replace(/departments?|depts?/g, ''); }
+
+    query = query.replace(/\b(in|for|of|show|me|the)\b/g, '').trim();
+    if(query.length > 0) searchConfig.keyword = query;
+
+    runAnalysis();
+};
+
+window.clearSmartSearch = function() {
+    document.getElementById('aiSearchBox').value = '';
+    document.getElementById('autocomplete-list').style.display = 'none';
+    searchConfig = { isActive: false, limit: null, forceLevel: null, keyword: null };
+    drillDownStack = [];
+    
+    document.getElementById('tableFilterMode').value = 'all';
+    document.getElementById('tableFilterCount').value = '';
+    document.getElementById('tableFilterCount').disabled = true;
+
+    runAnalysis();
+};
+
+window.toggleTableCount = function() {
+    const filterMode = document.getElementById('tableFilterMode').value;
+    const input = document.getElementById('tableFilterCount');
+    if(filterMode === 'all') {
+        input.disabled = true;
+        input.value = '';
+    } else {
+        input.disabled = false;
+        if(!input.value) input.value = 10; 
+    }
+    runAnalysis();
+};
+
+window.toggleSort = function(col) {
+    if (sortConfig.col === col) {
+        sortConfig.dir = sortConfig.dir === 'desc' ? 'asc' : 'desc';
+    } else { 
+        sortConfig.col = col; 
+        sortConfig.dir = 'desc'; 
+    }
+    
+    ['cur', 'prev', 'var', 'pct'].forEach(c => {
+        document.getElementById(`icn-${c}`).innerText = '';
+        document.getElementById(`icn-${c}`).classList.remove('sort-active');
+    });
+    const activeIcon = document.getElementById(`icn-${col}`);
+    activeIcon.innerText = sortConfig.dir === 'desc' ? '▼' : '▲';
+    activeIcon.classList.add('sort-active');
+    runAnalysis();
+};
+
+window.handleRowClick = function(val) {
+    const currentIndex = drillHierarchy.indexOf(currentAggLevel);
+    if(currentIndex >= 0 && currentIndex < drillHierarchy.length - 1) {
+        drillDownStack.push({ dimension: currentAggLevel, value: val });
+        runAnalysis();
+    }
+};
+
+window.stepBackDrill = function() {
+    drillDownStack.pop();
+    runAnalysis();
+};
+
+window.clearAllDrill = function() {
+    drillDownStack = [];
+    if(searchConfig.isActive) clearSmartSearch(); 
+    else runAnalysis();
+};
+
+window.runAnalysis = function() {
+    const metric = document.getElementById('metric').value;
+    let displayCurLabel = "", displayPrevLabel = "";
+    
+    let curLabels = [], prevLabels = [];
+    let startA, endA, startB, endB;
+
+    if (hasDailyData) {
+        startA = document.getElementById('dateStartA').value;
+        endA = document.getElementById('dateEndA').value;
+        startB = document.getElementById('dateStartB').value;
+        endB = document.getElementById('dateEndB').value;
+        
+        displayCurLabel = `${formatDateDisplay(startA)} - ${formatDateDisplay(endA)}`;
+        displayPrevLabel = `${formatDateDisplay(startB)} - ${formatDateDisplay(endB)}`;
+    } else {
+        const curYear = document.getElementById('selYear').value;
+        if(!curYear) return;
+        const targetMonths = Array.from(document.querySelectorAll('#f_TargetMonth input:checked')).map(i => i.value);
+        let prevMonths = [];
+        let prevYear = "";
+
+        if (mode === 'Custom') {
+            prevYear = document.getElementById('selPrevYear').value;
+            prevMonths = Array.from(document.querySelectorAll('#f_PrevMonth input:checked')).map(i => i.value);
+        } else if (mode === 'YoY') { 
+            prevYear = (parseInt(curYear) - 1).toString();
+            prevMonths = [...targetMonths];
+        } else { prevYear = curYear; }
+
+        curLabels = targetMonths.map(m => `${m} ${curYear}`);
+
+        if (mode === 'MoM') {
+            prevLabels = targetMonths.map(m => {
+                const mIdx = monthOrder.indexOf(m);
+                if (mIdx === 0) return `DEC ${parseInt(curYear) - 1}`;
+                return `${monthOrder[mIdx - 1]} ${curYear}`;
+            });
+        } else { prevLabels = prevMonths.map(m => `${m} ${prevYear}`); }
+
+        const formatTimeLabel = (months, y) => {
+            if (months.length === 0) return `No Selection`;
+            if (months.length === 1) return `${months[0]} ${y}`;
+            if (months.length <= 3) return `${months.join('/')} ${y}`;
+            return `${months.length} Months`;
+        };
+
+        displayCurLabel = formatTimeLabel(targetMonths, curYear);
+        displayPrevLabel = mode === 'MoM' && targetMonths.length > 0 ? (targetMonths.length === 1 ? prevLabels[0] : `${targetMonths.length} Prev Mths`) : formatTimeLabel(prevMonths, prevYear);
+    }
+
+    let d = getFilteredDataForLevel(hierarchyConfig.length);
+
+    if (searchConfig.isActive && searchConfig.keyword) {
+        const kw = searchConfig.keyword;
+        d = d.filter(r => { return Object.values(r).some(val => String(val).toLowerCase().includes(kw)); });
+    }
+
+    if (drillDownStack.length > 0) {
+        drillDownStack.forEach(drill => { d = d.filter(r => r[drill.dimension] === drill.value); });
+    }
+
+    if (drillDownStack.length > 0) {
+        const lastDrill = drillDownStack[drillDownStack.length - 1];
+        const lastIndex = drillHierarchy.indexOf(lastDrill.dimension);
+        currentAggLevel = drillHierarchy[lastIndex + 1] || "Product Name";
+    } else if (searchConfig.isActive && searchConfig.forceLevel) {
+        currentAggLevel = searchConfig.forceLevel;
+    } else {
+        const hasCountryData = rows.some(r => r.Country && String(r.Country).trim() !== "");
+        currentAggLevel = hasCountryData ? "Country" : "Department";
+        
+        if (currentAggLevel === "Country") {
+            const countries = getMultiSelectValues('Country');
+            if (countries.length > 0) currentAggLevel = "Department";
+        }
+        
+        if (currentAggLevel === "Department") {
+            const depts = getMultiSelectValues('Department');
+            if (depts.length > 0) currentAggLevel = "Category";
+        }
+        
+        for (let i = 2; i < hierarchyConfig.length; i++) {
+            const btn = document.getElementById(`btn_${hierarchyConfig[i].replace(/\s+/g,'')}`);
+            const val = btn.getAttribute('data-value') || "All";
+            if (val !== "All" && hierarchyConfig.indexOf(currentAggLevel) <= i) {
+                currentAggLevel = hierarchyConfig[i + 1] || hierarchyConfig[i];
+            }
+        }
+    }
+
+    const drillHeader = document.getElementById('drillDownHeader');
+    document.getElementById('thDimName').innerText = currentAggLevel;
+
+    if (drillDownStack.length > 0) {
+        drillHeader.style.setProperty('display', 'flex', 'important');
+        const breadcrumbs = drillDownStack.map(b => b.value).join(' <span class="text-muted mx-1">/</span> ');
+        let searchContext = (searchConfig.isActive && document.getElementById('aiSearchBox').value) 
+            ? ` <span class="badge ms-2" style="background: var(--glass-border); color: var(--text-main);">Search: '${document.getElementById('aiSearchBox').value}'</span>` : '';
+        document.getElementById('drillDownTitle').innerHTML = `Path: ${breadcrumbs}${searchContext}`;
+        document.getElementById('btnStepBack').style.display = 'inline-block';
+    } else if (searchConfig.isActive) {
+        drillHeader.style.setProperty('display', 'flex', 'important');
+        document.getElementById('drillDownTitle').innerHTML = `🔍 AI Result: <span class="text-success">${document.getElementById('aiSearchBox').value}</span>`;
+        document.getElementById('btnStepBack').style.display = 'none';
+    } else {
+        drillHeader.style.setProperty('display', 'none', 'important');
+    }
+
+    const map = {};
+    d.forEach(r => {
+        let k = r[currentAggLevel] || "Unknown Item";
+        
+        if (currentAggLevel === "Product Name") {
+            const pid = r["Product ID"] || r["ProductID"] || r["Item Code"] || r["Material"] || r["Article"];
+            if (pid) k = `${pid} - ${k}`;
+        }
+        
+        if(!map[k]) map[k] = { cur: 0, prev: 0 };
+        
+        if (hasDailyData) {
+            const rDate = r._isoDate;
+            if (rDate && rDate >= startA && rDate <= endA) map[k].cur += (+r[metric] || 0);
+            if (rDate && rDate >= startB && rDate <= endB) map[k].prev += (+r[metric] || 0);
+        } else {
+            const rowDate = r["Calendar Year/Month"];
+            if(curLabels.includes(rowDate)) map[k].cur += (+r[metric] || 0);
+            if(prevLabels.includes(rowDate)) map[k].prev += (+r[metric] || 0);
+        }
+    });
+
+    let results = Object.entries(map);
+
+    results.sort((a, b) => {
+        let vA, vB;
+        if (sortConfig.col === 'cur') { vA = a[1].cur; vB = b[1].cur; }
+        else if (sortConfig.col === 'prev') { vA = a[1].prev; vB = b[1].prev; }
+        else if (sortConfig.col === 'var') { vA = a[1].cur - a[1].prev; vB = b[1].cur - b[1].prev; }
+        else if (sortConfig.col === 'pct') {
+            vA = a[1].prev ? (a[1].cur - a[1].prev) / a[1].prev : -999;
+            vB = b[1].prev ? (b[1].cur - b[1].prev) / b[1].prev : -999;
+        }
+        return sortConfig.dir === 'desc' ? vB - vA : vA - vB;
+    });
+
+    animateDataUpdate(() => updateDashboard(results, metric, displayCurLabel, displayPrevLabel));
+};
+
+window.updateChartType = function() {
+    const type = document.getElementById('chartTypeSelector').value;
+    const isLineOrArea = type === 'line' || type === 'area';
+    chart.updateOptions({ 
+        chart: { type: type },
+        stroke: { show: true, width: isLineOrArea ? 3 : 3, colors: isLineOrArea ? undefined : ['transparent'], curve: 'smooth' },
+        fill: { type: isLineOrArea ? 'gradient' : 'solid', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } }
+    });
+};
+
+window.renderMonthSelection = function() {
+    if(hasDailyData) return;
+    const y = document.getElementById('selYear').value;
+    const container = document.getElementById('f_TargetMonth');
+    if (!yearMonthMap[y]) { container.innerHTML = ''; updateTimeBtnText('TargetMonth'); runAnalysis(); return; }
+    const available = [...yearMonthMap[y]].sort((a,b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+    
+    let html = `<div class="p-2 border-bottom sticky-top" style="background: var(--glass-bg); backdrop-filter: blur(10px);
