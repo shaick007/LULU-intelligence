@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuLu BI: Executive Master Dashboard</title>
+    <title>LuLu BI: Executive Master Dashboard V1.45</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -131,16 +131,21 @@
         .autocomplete-item:hover { background-color: var(--table-hover); color: var(--lulu-green); }
 
         .glass-panel { background: var(--drill-bg); border: 1px solid var(--glass-border); border-radius: 16px; }
-        .sidebar-sticky { position: sticky; top: 20px; height: calc(100vh - 40px); overflow-y: auto; overflow-x: hidden; border-radius: 28px; }
         .chart-scroll-wrapper { overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
-        
         .transition-layout { transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), padding 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
         
+        /* UNIFIED RESPONSIVE SIDEBAR CSS */
+        .sidebar-sticky { position: sticky; top: 20px; height: calc(100vh - 40px); overflow-y: auto; overflow-x: hidden; border-radius: 28px; }
+        .mobile-close-btn { display: none; }
+        
         @media (max-width: 991.98px) {
-            .sidebar-sticky { position: relative; height: auto; top: 0; margin-bottom: 20px; }
             .header-island { margin: 15px; padding: 15px; flex-direction: column; align-items: stretch; border-radius: 24px; }
             .header-island .header-left, .header-island .header-right { justify-content: space-between; width: 100%; }
-            #sidebarCol.d-none { display: none !important; }
+            
+            #sidebarCol { position: fixed; top: 0; left: -350px; width: 320px; height: 100vh; z-index: 2000; transition: left 0.3s ease; display: block !important; padding: 0 !important; }
+            #sidebarCol.show-mobile { left: 0; }
+            .sidebar-sticky { height: 100vh; border-radius: 0; border: none; border-right: 1px solid var(--glass-border); }
+            .mobile-close-btn { display: block; filter: invert(0.5); }
         }
         
         @media (max-width: 767.98px) {
@@ -160,6 +165,8 @@
 </head>
 <body>
 
+<div id="mobileBackdrop" class="d-none" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:1040;" onclick="toggleSidebar()"></div>
+
 <div class="header-island bento-glass mb-4">
     <div class="header-left">
         <div style="font-weight:800; font-size:1.6rem; letter-spacing: -0.5px;">
@@ -169,7 +176,7 @@
         
         <button class="btn btn-sm btn-outline-success rounded-pill fw-bold ms-lg-2" onclick="toggleSidebar()" style="font-size: 12px; border-width: 1.5px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-            Toggle Filters
+            Filters
         </button>
 
         <div class="d-flex gap-1 w-100 mt-2 mt-md-0" style="max-width: 300px;">
@@ -197,11 +204,14 @@
     <div class="row g-3 g-md-4">
         
         <div class="col-12 col-lg-4 col-xl-3 transition-layout" id="sidebarCol">
-            <div class="bento-glass p-3 p-md-4 sidebar-sticky">
-                <h5 class="fw-bold mb-4 d-flex align-items-center" style="color: var(--lulu-green);">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                    Master Controls
-                </h5>
+            <div class="bento-glass p-4 sidebar-sticky">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center" style="color: var(--lulu-green);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                        Master Controls
+                    </h5>
+                    <button class="btn btn-sm btn-close mobile-close-btn" onclick="toggleSidebar()"></button>
+                </div>
                 
                 <h6 class="fw-bold mb-3">Time Selection</h6>
                 
@@ -345,7 +355,7 @@
 </div>
 
 <script>
-// --- BULLETPROOF STATE MANAGEMENT ---
+// --- PERFECTLY CLEAN JS STATE ---
 let rows = [];
 let yearMonthMap = {};
 let chart = null;
@@ -368,15 +378,14 @@ window.addEventListener('load', () => {
         document.getElementById('sidebarCol').classList.add('d-none');
         document.getElementById('mainCol').className = 'col-12 transition-layout';
     }
-    
     const uploadInput = document.getElementById('upload');
     if (uploadInput) {
         uploadInput.addEventListener('change', handleFileUpload);
     }
 });
 
-// --- GLOBAL FUNCTIONS ---
-window.toggleTheme = function() {
+// --- GLOBAL UI FUNCTIONS ---
+function toggleTheme() {
     const body = document.body;
     const isDark = body.getAttribute('data-theme') === 'dark';
     if (isDark) {
@@ -388,23 +397,30 @@ window.toggleTheme = function() {
         document.getElementById('themeBtn').innerText = 'Light Mode';
         updateChartTheme('dark');
     }
-};
+}
 
-window.toggleSidebar = function() {
+function toggleSidebar() {
     const sidebar = document.getElementById('sidebarCol');
     const main = document.getElementById('mainCol');
+    const backdrop = document.getElementById('mobileBackdrop');
     
-    if (sidebar.classList.contains('d-none')) {
-        sidebar.classList.remove('d-none');
-        main.className = 'col-12 col-lg-8 col-xl-9 transition-layout';
+    if (window.innerWidth < 992) {
+        sidebar.classList.toggle('show-mobile');
+        if(sidebar.classList.contains('show-mobile')) backdrop.classList.remove('d-none');
+        else backdrop.classList.add('d-none');
     } else {
-        sidebar.classList.add('d-none');
-        main.className = 'col-12 transition-layout';
+        if (sidebar.classList.contains('d-none')) {
+            sidebar.classList.remove('d-none');
+            main.className = 'col-12 col-lg-8 col-xl-9 transition-layout';
+        } else {
+            sidebar.classList.add('d-none');
+            main.className = 'col-12 transition-layout';
+        }
     }
     if (chart) { setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300); }
-};
+}
 
-window.setMode = function(m) {
+function setMode(m) {
     mode = m;
     document.querySelectorAll('.nav-pill-lulu').forEach(b => b.classList.remove('active'));
     document.getElementById('btn' + m).classList.add('active');
@@ -412,9 +428,9 @@ window.setMode = function(m) {
     
     if(hasDailyData) updateDailyPeriodB();
     runAnalysis();
-};
+}
 
-window.processSmartSearch = function() {
+function processSmartSearch() {
     document.getElementById('autocomplete-list').style.display = 'none'; 
     let query = document.getElementById('aiSearchBox').value.toLowerCase().trim();
     if(!query) { clearSmartSearch(); return; }
@@ -444,22 +460,20 @@ window.processSmartSearch = function() {
     if(query.length > 0) searchConfig.keyword = query;
 
     runAnalysis();
-};
+}
 
-window.clearSmartSearch = function() {
+function clearSmartSearch() {
     document.getElementById('aiSearchBox').value = '';
     document.getElementById('autocomplete-list').style.display = 'none';
     searchConfig = { isActive: false, limit: null, forceLevel: null, keyword: null };
     drillDownStack = [];
-    
     document.getElementById('tableFilterMode').value = 'all';
     document.getElementById('tableFilterCount').value = '';
     document.getElementById('tableFilterCount').disabled = true;
-
     runAnalysis();
-};
+}
 
-window.toggleTableCount = function() {
+function toggleTableCount() {
     const filterMode = document.getElementById('tableFilterMode').value;
     const input = document.getElementById('tableFilterCount');
     if(filterMode === 'all') {
@@ -470,15 +484,11 @@ window.toggleTableCount = function() {
         if(!input.value) input.value = 10; 
     }
     runAnalysis();
-};
+}
 
-window.toggleSort = function(col) {
-    if (sortConfig.col === col) {
-        sortConfig.dir = sortConfig.dir === 'desc' ? 'asc' : 'desc';
-    } else { 
-        sortConfig.col = col; 
-        sortConfig.dir = 'desc'; 
-    }
+function toggleSort(col) {
+    if (sortConfig.col === col) sortConfig.dir = sortConfig.dir === 'desc' ? 'asc' : 'desc';
+    else { sortConfig.col = col; sortConfig.dir = 'desc'; }
     
     ['cur', 'prev', 'var', 'pct'].forEach(c => {
         document.getElementById(`icn-${c}`).innerText = '';
@@ -488,31 +498,183 @@ window.toggleSort = function(col) {
     activeIcon.innerText = sortConfig.dir === 'desc' ? '▼' : '▲';
     activeIcon.classList.add('sort-active');
     runAnalysis();
-};
+}
 
-window.handleRowClick = function(val) {
+function handleRowClick(val) {
     const currentIndex = drillHierarchy.indexOf(currentAggLevel);
     if(currentIndex >= 0 && currentIndex < drillHierarchy.length - 1) {
         drillDownStack.push({ dimension: currentAggLevel, value: val });
         runAnalysis();
     }
-};
+}
 
-window.stepBackDrill = function() {
+function stepBackDrill() {
     drillDownStack.pop();
     runAnalysis();
-};
+}
 
-window.clearAllDrill = function() {
+function clearAllDrill() {
     drillDownStack = [];
     if(searchConfig.isActive) clearSmartSearch(); 
     else runAnalysis();
-};
+}
 
-window.runAnalysis = function() {
+// --- DATA INGESTION ENGINE ---
+function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+        try {
+            const wb = XLSX.read(new Uint8Array(ev.target.result), {type: "array", cellDates: false});
+            const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            rows = [];
+            
+            hasDailyData = raw.some(r => r["Calendar Day"] != null || r["Date"] != null);
+
+            if (raw.length > 0) {
+                // Per-row processing loop to gracefully handle formatting errors
+                raw.forEach((r) => {
+                    try {
+                        let salesVal = 0, qtyVal = 0, pName = null;
+                        
+                        Object.keys(r).forEach(k => {
+                            if (!k) return;
+                            const upperK = String(k).toUpperCase().trim();
+                            const rawVal = r[k];
+                            const valStr = rawVal != null ? String(rawVal).trim() : "";
+                            
+                            if(upperK === 'SALES VALUE' || upperK === 'AED' || upperK === 'SALES' || upperK === 'NET SALES' || upperK === 'REVENUE' || upperK === 'TOTAL SALES') {
+                                salesVal = parseFloat(valStr.replace(/,/g, '')) || 0;
+                            }
+                            if(upperK === 'SOLD QTY' || upperK === 'EA' || upperK === 'QTY' || upperK === 'QUANTITY' || upperK === 'UNITS') {
+                                qtyVal = parseFloat(valStr.replace(/,/g, '')) || 0;
+                            }
+                            if(upperK === 'PRODUCT NAME' || upperK === 'DESCRIPTION' || upperK === 'ITEM NAME' || upperK.startsWith('__EMPTY') || upperK === '') {
+                                if(valStr.length > 1 && !pName && isNaN(rawVal)) {
+                                    pName = valStr;
+                                }
+                            }
+                        });
+                        
+                        if(!pName) pName = "Unknown Product";
+
+                        let isoDate = null, m3 = "UNK", yr = "0000";
+                        let rawDate = r["Calendar Day"] || r["Date"] || r["Day"];
+                        
+                        if (rawDate != null && rawDate !== "") {
+                            if (typeof rawDate === 'number') {
+                                const d = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
+                                if (!isNaN(d)) isoDate = d.toISOString().split('T')[0];
+                            } else {
+                                let dStr = String(rawDate).trim();
+                                let dParts = dStr.split(/[\.\-\/]/);
+                                if (dParts.length === 3) {
+                                    if (dParts[2].length === 4) { 
+                                        isoDate = `${dParts[2]}-${dParts[1].padStart(2, '0')}-${dParts[0].padStart(2, '0')}`;
+                                    } else if (dParts[0].length === 4) { 
+                                        isoDate = `${dParts[0]}-${dParts[1].padStart(2, '0')}-${dParts[2].padStart(2, '0')}`;
+                                    }
+                                }
+                                if(!isoDate) {
+                                    const parseAttempt = new Date(dStr);
+                                    if(!isNaN(parseAttempt)) isoDate = parseAttempt.toISOString().split('T')[0];
+                                }
+                            }
+                            
+                            if(isoDate) {
+                                const dObj = new Date(isoDate);
+                                m3 = monthOrder[dObj.getMonth()] || "UNK";
+                                yr = String(dObj.getFullYear());
+                            }
+                        } else if (r["Calendar Year/Month"]) {
+                            const ym = String(r["Calendar Year/Month"]).trim();
+                            const parts = ym.split(/\s+/);
+                            if(parts.length > 1) { m3 = parts[0].substring(0,3).toUpperCase(); yr = parts[1]; }
+                        }
+                        
+                        if (isoDate || m3 !== "UNK") {
+                            rows.push({ 
+                                ...r, 
+                                "Product Name": pName,
+                                "Sales Value": salesVal,
+                                "Sold Qty": qtyVal,
+                                _month: m3, 
+                                _year: yr, 
+                                "Calendar Year/Month": `${m3} ${yr}`, 
+                                _isoDate: isoDate 
+                            });
+                        }
+                    } catch (rowError) {} 
+                });
+            }
+
+            if(rows.length === 0) {
+                alert("Could not extract valid data. Please ensure the Excel contains recognizable headers (e.g., AED, EA, Date).");
+                return;
+            }
+
+            const hasCountry = rows.some(r => r.Country && String(r.Country).trim() !== "");
+            document.getElementById('filter_Country_container').style.display = hasCountry ? 'block' : 'none';
+
+            if (hasDailyData) {
+                document.getElementById('monthlyBoxA').style.display = 'none';
+                document.getElementById('monthlyBoxB').style.display = 'none';
+                document.getElementById('dailyBoxA').style.display = 'block';
+                document.getElementById('dailyBoxB').style.display = 'block';
+                
+                let allDates = rows.map(r => r._isoDate).filter(Boolean).sort();
+                if(allDates.length > 0) {
+                    let minD = allDates[0];
+                    let maxD = allDates[allDates.length - 1];
+                    
+                    document.getElementById('dateStartA').min = minD; document.getElementById('dateStartA').max = maxD;
+                    document.getElementById('dateEndA').min = minD; document.getElementById('dateEndA').max = maxD;
+                    document.getElementById('dateStartB').min = minD; document.getElementById('dateStartB').max = maxD;
+                    document.getElementById('dateEndB').min = minD; document.getElementById('dateEndB').max = maxD;
+                    
+                    let fYear = maxD.split('-')[0];
+                    let fMonth = maxD.split('-')[1];
+                    let defaultStart = `${fYear}-${fMonth}-01`;
+                    if (defaultStart < minD) defaultStart = minD;
+                    
+                    document.getElementById('dateStartA').value = defaultStart;
+                    document.getElementById('dateEndA').value = maxD;
+                    updateDailyPeriodB();
+                }
+            } else {
+                document.getElementById('monthlyBoxA').style.display = 'block';
+                document.getElementById('monthlyBoxB').style.display = 'block';
+                document.getElementById('dailyBoxA').style.display = 'none';
+                document.getElementById('dailyBoxB').style.display = 'none';
+            }
+
+            if(!chart) initChart();
+            if(!hasDailyData) buildTimeMap();
+            if(!hasDailyData) initUI();
+            
+            populateMultiSelect('Country', rows);
+            populateMultiSelect('Department', rows);
+            cascadeUpdate(2); 
+            
+            buildSearchableTerms();
+            generateRecommendations();
+            
+            document.getElementById('dashboard').style.display = 'block';
+            
+        } catch (err) { 
+            console.error("File Parse Error:", err);
+            alert("The file was completely unreadable. Check F12 console for details."); 
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// --- ANALYSIS ENGINE ---
+function runAnalysis() {
     const metric = document.getElementById('metric').value;
     let displayCurLabel = "", displayPrevLabel = "";
-    
     let curLabels = [], prevLabels = [];
     let startA, endA, startB, endB;
 
@@ -528,8 +690,7 @@ window.runAnalysis = function() {
         const curYear = document.getElementById('selYear').value;
         if(!curYear) return;
         const targetMonths = Array.from(document.querySelectorAll('#f_TargetMonth input:checked')).map(i => i.value);
-        let prevMonths = [];
-        let prevYear = "";
+        let prevMonths = [], prevYear = "";
 
         if (mode === 'Custom') {
             prevYear = document.getElementById('selPrevYear').value;
@@ -621,22 +782,22 @@ window.runAnalysis = function() {
     const map = {};
     d.forEach(r => {
         let k = r[currentAggLevel] || "Unknown Item";
-        
         if (currentAggLevel === "Product Name") {
             const pid = r["Product ID"] || r["ProductID"] || r["Item Code"] || r["Material"] || r["Article"];
             if (pid) k = `${pid} - ${k}`;
         }
         
         if(!map[k]) map[k] = { cur: 0, prev: 0 };
-        
+        let metricVal = r[metric] || 0;
+
         if (hasDailyData) {
             const rDate = r._isoDate;
-            if (rDate && rDate >= startA && rDate <= endA) map[k].cur += (+r[metric] || 0);
-            if (rDate && rDate >= startB && rDate <= endB) map[k].prev += (+r[metric] || 0);
+            if (rDate && rDate >= startA && rDate <= endA) map[k].cur += metricVal;
+            if (rDate && rDate >= startB && rDate <= endB) map[k].prev += metricVal;
         } else {
             const rowDate = r["Calendar Year/Month"];
-            if(curLabels.includes(rowDate)) map[k].cur += (+r[metric] || 0);
-            if(prevLabels.includes(rowDate)) map[k].prev += (+r[metric] || 0);
+            if(curLabels.includes(rowDate)) map[k].cur += metricVal;
+            if(prevLabels.includes(rowDate)) map[k].prev += metricVal;
         }
     });
 
@@ -655,9 +816,10 @@ window.runAnalysis = function() {
     });
 
     animateDataUpdate(() => updateDashboard(results, metric, displayCurLabel, displayPrevLabel));
-};
+}
 
-window.updateChartType = function() {
+// --- HELPER UI FUNCTIONS ---
+function updateChartType() {
     const type = document.getElementById('chartTypeSelector').value;
     const isLineOrArea = type === 'line' || type === 'area';
     chart.updateOptions({ 
@@ -665,9 +827,9 @@ window.updateChartType = function() {
         stroke: { show: true, width: isLineOrArea ? 3 : 3, colors: isLineOrArea ? undefined : ['transparent'], curve: 'smooth' },
         fill: { type: isLineOrArea ? 'gradient' : 'solid', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } }
     });
-};
+}
 
-window.renderMonthSelection = function() {
+function renderMonthSelection() {
     if(hasDailyData) return;
     const y = document.getElementById('selYear').value;
     const container = document.getElementById('f_TargetMonth');
@@ -686,9 +848,9 @@ window.renderMonthSelection = function() {
     container.innerHTML = html + `</div>`;
     updateTimeBtnText('TargetMonth');
     runAnalysis();
-};
+}
 
-window.renderPrevMonthSelection = function() {
+function renderPrevMonthSelection() {
     if(hasDailyData) return;
     const y = document.getElementById('selPrevYear').value;
     const container = document.getElementById('f_PrevMonth');
@@ -707,43 +869,42 @@ window.renderPrevMonthSelection = function() {
     container.innerHTML = html + `</div>`;
     updateTimeBtnText('PrevMonth');
     if(mode === 'Custom') runAnalysis();
-};
+}
 
-window.updateDailyPeriodB = function() {
+function updateDailyPeriodB() {
     if(!hasDailyData || mode === 'Custom') return;
     
     let startA = document.getElementById('dateStartA').value;
     let endA = document.getElementById('dateEndA').value;
-    
     if(!startA || !endA) return;
 
-    let d1 = new Date(startA);
-    let d2 = new Date(endA);
+    try {
+        let d1 = new Date(startA);
+        let d2 = new Date(endA);
 
-    if(mode === 'YoY') {
-        d1.setFullYear(d1.getFullYear() - 1);
-        d2.setFullYear(d2.getFullYear() - 1);
-    } else if (mode === 'MoM') {
-        d1.setMonth(d1.getMonth() - 1);
-        d2.setMonth(d2.getMonth() - 1);
-    }
+        if(mode === 'YoY') {
+            d1.setFullYear(d1.getFullYear() - 1);
+            d2.setFullYear(d2.getFullYear() - 1);
+        } else if (mode === 'MoM') {
+            d1.setMonth(d1.getMonth() - 1);
+            d2.setMonth(d2.getMonth() - 1);
+        }
 
-    document.getElementById('dateStartB').value = d1.toISOString().split('T')[0];
-    document.getElementById('dateEndB').value = d2.toISOString().split('T')[0];
-};
+        document.getElementById('dateStartB').value = d1.toISOString().split('T')[0];
+        document.getElementById('dateEndB').value = d2.toISOString().split('T')[0];
+    } catch(e) {}
+}
 
-window.filterDropdownSearch = function(input) {
+function filterDropdownSearch(input) {
     clearTimeout(filterSearchTimeout);
     filterSearchTimeout = setTimeout(() => {
         const filter = input.value.toLowerCase();
         const container = input.closest('.dropdown-menu-custom');
-        
         const labels = container.querySelectorAll('label');
         for(let i=0; i<labels.length; i++) {
             const text = labels[i].textContent.toLowerCase();
             labels[i].style.display = text.includes(filter) ? 'block' : 'none';
         }
-        
         const items = container.querySelectorAll('.dropdown-item-custom');
         for(let i=0; i<items.length; i++) {
             if(items[i].textContent.includes("-- All")) continue;
@@ -751,21 +912,21 @@ window.filterDropdownSearch = function(input) {
             items[i].style.display = text.includes(filter) ? 'block' : 'none';
         }
     }, 150); 
-};
+}
 
-window.selectAllMulti = function(id, isTime = false) {
+function selectAllMulti(id, isTime = false) {
     document.querySelectorAll(`#f_${id} input[type="checkbox"]`).forEach(cb => cb.checked = true);
     if(isTime) { updateTimeBtnText(id); runAnalysis(); }
     else { updateMultiBtnText(id); cascadeUpdate(id === 'Country' ? 1 : 2); }
-};
+}
 
-window.clearAllMulti = function(id, isTime = false) {
+function clearAllMulti(id, isTime = false) {
     document.querySelectorAll(`#f_${id} input[type="checkbox"]`).forEach(cb => cb.checked = false);
     if(isTime) { updateTimeBtnText(id); runAnalysis(); }
     else { updateMultiBtnText(id); cascadeUpdate(id === 'Country' ? 1 : 2); }
-};
+}
 
-window.selectSingle = function(levelName, val, display, silent = false) {
+function selectSingle(levelName, val, display, silent = false) {
     const btn = document.getElementById(`btn_${levelName.replace(/\s+/g,'')}`);
     btn.innerText = display;
     btn.setAttribute('data-value', val);
@@ -777,165 +938,28 @@ window.selectSingle = function(levelName, val, display, silent = false) {
         if(levelIndex >= 0) cascadeUpdate(levelIndex + 1);
         else runAnalysis();
     }
-};
+}
 
-window.applySuggestion = function(text) {
+function applySuggestion(text) {
     document.getElementById('aiSearchBox').value = text;
     processSmartSearch();
-};
-
-// --- CORE LOGIC ---
-function updateChartTheme(themeMode) {
-    if(chart) {
-        chart.updateOptions({
-            theme: { mode: themeMode },
-            chart: { background: 'transparent' },
-            colors: themeMode === 'dark' ? ['#30d158', '#48484a'] : ['#00A642', '#d1d1d6']
-        });
-    }
 }
 
-function formatValue(value, isCurrency, isGraphic = false) {
-    const decimals = isGraphic ? 2 : 0;
-    if (isCurrency) {
-        return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', currencyDisplay: 'code', currencySign: 'accounting', minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
-    } else {
-        return new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
-    }
+function updateTimeBtnText(type) {
+    const checked = Array.from(document.querySelectorAll(`#f_${type} input:checked`)).map(cb => cb.value);
+    const btn = document.getElementById(`btn_${type}`);
+    if (checked.length === 0) btn.innerText = `Select Month`;
+    else if (checked.length === 1) btn.innerText = checked[0];
+    else btn.innerText = `${checked.length} Selected`;
 }
 
-function formatDateDisplay(dateStr) {
-    if(!dateStr) return "";
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-}
-
-function handleFileUpload(e) {
-    const reader = new FileReader();
-    reader.onload = ev => {
-        try {
-            const wb = XLSX.read(new Uint8Array(ev.target.result), {type: "array", cellDates: false});
-            const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            rows = [];
-            
-            hasDailyData = raw.some(r => r["Calendar Day"] !== undefined);
-
-            if (raw.length > 0) {
-                const firstRow = raw[0];
-                const hasPivotedMonths = monthOrder.some(m => Object.keys(firstRow).some(k => String(k).toUpperCase().startsWith(m)));
-                
-                if (hasPivotedMonths && !firstRow.hasOwnProperty("Calendar Year/Month") && !firstRow.hasOwnProperty("Calendar Day")) {
-                    raw.forEach(row => {
-                        Object.keys(row).forEach(key => {
-                            const kUpper = String(key).toUpperCase().trim();
-                            if (monthOrder.some(m => kUpper.startsWith(m))) {
-                                const parts = kUpper.split(/\s+/);
-                                if (parts.length >= 2) {
-                                    const m3 = parts[0].substring(0,3);
-                                    rows.push({ ...row, "Calendar Year/Month": `${m3} ${parts[1]}`, _month: m3, _year: parts[1], "Sales Value": parseFloat(row[key]) || 0 });
-                                }
-                            }
-                        });
-                    });
-                } else {
-                    rows = raw.map(r => {
-                        let isoDate = null, m3 = "UNK", yr = "0000";
-                        let rawDate = r["Calendar Day"];
-                        
-                        if (rawDate !== undefined && rawDate !== null && rawDate !== "") {
-                            if (typeof rawDate === 'number') {
-                                const d = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
-                                isoDate = d.toISOString().split('T')[0];
-                            } else if (typeof rawDate === 'string') {
-                                let dParts = rawDate.split(/[\.\-\/]/);
-                                if (dParts.length === 3) {
-                                    if (dParts[2].length === 4) { 
-                                        isoDate = `${dParts[2]}-${dParts[1].padStart(2, '0')}-${dParts[0].padStart(2, '0')}`;
-                                    } else if (dParts[0].length === 4) { 
-                                        isoDate = `${dParts[0]}-${dParts[1].padStart(2, '0')}-${dParts[2].padStart(2, '0')}`;
-                                    }
-                                }
-                                if(!isoDate) {
-                                    const parseAttempt = new Date(rawDate);
-                                    if(!isNaN(parseAttempt)) isoDate = parseAttempt.toISOString().split('T')[0];
-                                }
-                            }
-                            
-                            if(isoDate) {
-                                const dObj = new Date(isoDate);
-                                m3 = monthOrder[dObj.getMonth()];
-                                yr = String(dObj.getFullYear());
-                            }
-                        } else if (r["Calendar Year/Month"]) {
-                            const ym = String(r["Calendar Year/Month"]).trim();
-                            const parts = ym.split(/\s+/);
-                            if(parts.length > 1) {
-                                m3 = parts[0].substring(0,3).toUpperCase();
-                                yr = parts[1];
-                            }
-                        }
-                        
-                        return { 
-                            ...r, 
-                            _month: m3, 
-                            _year: yr, 
-                            "Calendar Year/Month": `${m3} ${yr}`, 
-                            _isoDate: isoDate 
-                        };
-                    }).filter(r => r._isoDate || r._month !== "UNK");
-                }
-            }
-
-            const hasCountry = rows.some(r => r.Country && String(r.Country).trim() !== "");
-            document.getElementById('filter_Country_container').style.display = hasCountry ? 'block' : 'none';
-
-            if (hasDailyData) {
-                document.getElementById('monthlyBoxA').style.display = 'none';
-                document.getElementById('monthlyBoxB').style.display = 'none';
-                document.getElementById('dailyBoxA').style.display = 'block';
-                document.getElementById('dailyBoxB').style.display = 'block';
-                
-                let allDates = rows.map(r => r._isoDate).filter(Boolean).sort();
-                if(allDates.length > 0) {
-                    let minD = allDates[0];
-                    let maxD = allDates[allDates.length - 1];
-                    
-                    document.getElementById('dateStartA').min = minD; document.getElementById('dateStartA').max = maxD;
-                    document.getElementById('dateEndA').min = minD; document.getElementById('dateEndA').max = maxD;
-                    document.getElementById('dateStartB').min = minD; document.getElementById('dateStartB').max = maxD;
-                    document.getElementById('dateEndB').min = minD; document.getElementById('dateEndB').max = maxD;
-                    
-                    document.getElementById('dateStartA').value = maxD;
-                    document.getElementById('dateEndA').value = maxD;
-                    window.updateDailyPeriodB();
-                }
-            } else {
-                document.getElementById('monthlyBoxA').style.display = 'block';
-                document.getElementById('monthlyBoxB').style.display = 'block';
-                document.getElementById('dailyBoxA').style.display = 'none';
-                document.getElementById('dailyBoxB').style.display = 'none';
-            }
-
-            if(!chart) initChart();
-            if(!hasDailyData) buildTimeMap();
-            if(!hasDailyData) initUI();
-            
-            populateMultiSelect('Country', rows);
-            populateMultiSelect('Department', rows);
-            cascadeUpdate(2); 
-            
-            buildSearchableTerms();
-            generateRecommendations();
-            
-            document.getElementById('dashboard').style.display = 'block';
-            
-            if (window.innerWidth < 992) {
-                document.getElementById('sidebarCol').classList.add('d-none');
-                document.getElementById('mainCol').className = 'col-12 transition-layout';
-            }
-        } catch (err) { alert("Error reading Excel file. Please ensure it matches the template format."); console.error(err); }
-    };
-    reader.readAsArrayBuffer(e.target.files[0]);
+function updateMultiBtnText(level) {
+    const checked = Array.from(document.querySelectorAll(`#f_${level} input:checked`)).map(cb => cb.value);
+    const btn = document.getElementById(`btn_${level}`);
+    if (checked.length === 0) btn.innerText = `All ${level}s`;
+    else if (checked.length === 1) btn.innerText = checked[0];
+    else btn.innerText = `${checked.length} Selected`;
+    cascadeUpdate(level === 'Country' ? 1 : 2);
 }
 
 function buildSearchableTerms() {
@@ -967,7 +991,7 @@ function generateRecommendations() {
     suggestions.push(`Top 50 items`);
 
     document.getElementById('aiSuggestions').innerHTML = suggestions.map(s => 
-        `<span class="ai-suggestion" onclick="window.applySuggestion('${s.replace(/'/g, "\\'")}')">${s}</span>`
+        `<span class="ai-suggestion" onclick="applySuggestion('${s.replace(/'/g, "\\'")}')">${s}</span>`
     ).join("");
 }
 
@@ -993,42 +1017,23 @@ function initUI() {
     spy.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
     spy.value = years[Math.max(0, years.length - 2)]; 
     
-    window.renderMonthSelection();
-    window.renderPrevMonthSelection();
-}
-
-function updateTimeBtnText(type) {
-    const checked = Array.from(document.querySelectorAll(`#f_${type} input:checked`)).map(cb => cb.value);
-    const btn = document.getElementById(`btn_${type}`);
-    if (checked.length === 0) btn.innerText = `Select Month`;
-    else if (checked.length === 1) btn.innerText = checked[0];
-    else btn.innerText = `${checked.length} Selected`;
+    renderMonthSelection();
+    renderPrevMonthSelection();
 }
 
 function getMultiSelectValues(level) {
     return Array.from(document.querySelectorAll(`#f_${level} input:checked`)).map(cb => cb.value);
 }
 
-function updateMultiBtnText(level) {
-    const checked = getMultiSelectValues(level);
-    const btn = document.getElementById(`btn_${level}`);
-    if (checked.length === 0) btn.innerText = `All ${level}s`;
-    else if (checked.length === 1) btn.innerText = checked[0];
-    else btn.innerText = `${checked.length} Selected`;
-    cascadeUpdate(level === 'Country' ? 1 : 2);
-}
-
 function populateMultiSelect(level, dataSet) {
     const unique = [...new Set(dataSet.map(r => r[level]))].filter(Boolean).sort();
-    
     let html = `<div class="p-2 border-bottom sticky-top" style="background: var(--glass-bg); backdrop-filter: blur(10px); z-index: 10; top: 0; border-color: var(--glass-border) !important;">
         <div class="d-flex justify-content-between mb-2">
-            <button class="btn btn-sm btn-outline-success py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="window.selectAllMulti('${level}', false)">Select All</button>
-            <button class="btn btn-sm btn-outline-danger py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="window.clearAllMulti('${level}', false)">Clear All</button>
+            <button class="btn btn-sm btn-outline-success py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="selectAllMulti('${level}', false)">Select All</button>
+            <button class="btn btn-sm btn-outline-danger py-0 fw-bold" style="font-size:11px; border-radius:8px;" onclick="clearAllMulti('${level}', false)">Clear All</button>
         </div>
-        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search ${level}..." onkeyup="window.filterDropdownSearch(this)">
+        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search ${level}..." onkeyup="filterDropdownSearch(this)">
     </div><div class="p-2">`;
-
     html += unique.map(v => `<label><input type="checkbox" value="${v}" onchange="updateMultiBtnText('${level}')"> ${v}</label>`).join("");
     document.getElementById(`f_${level}`).innerHTML = html + `</div>`;
     updateMultiBtnText(level);
@@ -1037,11 +1042,11 @@ function populateMultiSelect(level, dataSet) {
 function getFilteredDataForLevel(levelIndex) {
     let d = rows;
     if (levelIndex > 0) {
-        const countries = getMultiSelectValues('Country');
+        const countries = Array.from(document.querySelectorAll(`#f_Country input:checked`)).map(cb => cb.value);
         if (countries.length > 0) d = d.filter(r => countries.includes(r.Country));
     }
     if (levelIndex > 1) {
-        const depts = getMultiSelectValues('Department');
+        const depts = Array.from(document.querySelectorAll(`#f_Department input:checked`)).map(cb => cb.value);
         if (depts.length > 0) d = d.filter(r => depts.includes(r.Department));
     }
     for(let i=2; i<levelIndex; i++) {
@@ -1056,21 +1061,16 @@ function populateSingleSelect(levelName, dataSet) {
     const el = document.getElementById(`f_${levelName.replace(/\s+/g,'')}`);
     const btn = document.getElementById(`btn_${levelName.replace(/\s+/g,'')}`);
     let currentVal = btn.getAttribute('data-value') || "All";
-    
     const unique = [...new Set(dataSet.map(r => r[levelName]))].filter(Boolean).sort();
     
     let html = `<div class="p-2 border-bottom sticky-top" style="background: var(--glass-bg); backdrop-filter: blur(10px); z-index: 10; top: 0; border-color: var(--glass-border) !important;">
-        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search ${levelName}..." onkeyup="window.filterDropdownSearch(this)">
+        <input type="text" class="form-control form-control-sm dropdown-search" placeholder="Search ${levelName}..." onkeyup="filterDropdownSearch(this)">
     </div><div class="p-2">`;
-    
-    html += `<div class="dropdown-item-custom mb-1" onclick="window.selectSingle('${levelName}', 'All', 'All ${levelName}s')">-- All ${levelName}s --</div>`;
-    html += unique.map(v => `<div class="dropdown-item-custom mb-1" onclick="window.selectSingle('${levelName}', '${v.replace(/'/g, "\\'")}', '${v.replace(/'/g, "\\'")}')">${v}</div>`).join("");
-    
+    html += `<div class="dropdown-item-custom mb-1" onclick="selectSingle('${levelName}', 'All', 'All ${levelName}s')">-- All ${levelName}s --</div>`;
+    html += unique.map(v => `<div class="dropdown-item-custom mb-1" onclick="selectSingle('${levelName}', '${v.replace(/'/g, "\\'")}', '${v.replace(/'/g, "\\'")}')">${v}</div>`).join("");
     el.innerHTML = html + `</div>`;
     
-    if(!unique.includes(currentVal) && currentVal !== "All") {
-        window.selectSingle(levelName, "All", `All ${levelName}s`, true);
-    }
+    if(!unique.includes(currentVal) && currentVal !== "All") { selectSingle(levelName, "All", `All ${levelName}s`, true); }
 }
 
 function cascadeUpdate(changedLevelIndex) {
@@ -1079,7 +1079,7 @@ function cascadeUpdate(changedLevelIndex) {
         const dataForThisLevel = getFilteredDataForLevel(i);
         populateSingleSelect(hierarchyConfig[i], dataForThisLevel);
     }
-    window.runAnalysis();
+    runAnalysis();
 }
 
 function animateDataUpdate(updateFunc) {
@@ -1128,13 +1128,9 @@ function updateDashboard(data, metric, curLabel, prevLabel) {
     let limit = parseInt(countInput);
     
     let displayData = [...data];
-    
     if (tableMode !== 'all' && limit > 0) {
-        if (tableMode === 'bottom') {
-            displayData = displayData.slice(-limit).reverse();
-        } else {
-            displayData = displayData.slice(0, limit);
-        }
+        if (tableMode === 'bottom') displayData = displayData.slice(-limit).reverse();
+        else displayData = displayData.slice(0, limit);
     }
 
     const isLastLevel = drillHierarchy.indexOf(currentAggLevel) === drillHierarchy.length - 1;
@@ -1143,11 +1139,10 @@ function updateDashboard(data, metric, curLabel, prevLabel) {
         const d = val.cur - val.prev;
         const p = val.prev ? (d / val.prev * 100).toFixed(1) : 0;
         const safeName = name.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        
         const canClick = !isLastLevel; 
         const rowClass = canClick ? "clickable-row" : ""; 
 
-        return `<tr class="${rowClass}" ${canClick ? `onclick="window.handleRowClick('${safeName}')"` : ''}>
+        return `<tr class="${rowClass}" ${canClick ? `onclick="handleRowClick('${safeName}')"` : ''}>
             <td class="ps-3 ps-md-4 fw-bold text-truncate" style="max-width: 280px;" title="${name}">${name}</td>
             <td class="num">${formatValue(val.cur, isCurrency, false)}</td>
             <td class="num text-muted" style="font-weight:500;">${formatValue(val.prev, isCurrency, false)}</td>
@@ -1159,7 +1154,6 @@ function updateDashboard(data, metric, curLabel, prevLabel) {
     if (chart && typeof chart.updateOptions === 'function') {
         const chartLimit = (tableMode !== 'all' && limit > 0) ? Math.min(limit, 50) : displayData.length; 
         const topChartData = [...displayData].slice(0, chartLimit); 
-        
         const requiredWidth = Math.max(topChartData.length * 60, document.querySelector('.chart-scroll-wrapper').offsetWidth);
 
         chart.updateOptions({
@@ -1194,6 +1188,17 @@ function initChart() {
         stroke: { show: true, width: 3, colors: ['transparent'] }
     });
     chart.render();
+}
+
+function formatDateDisplay(dateStr) {
+    if(!dateStr) return "";
+    try {
+        const d = new Date(dateStr);
+        if(isNaN(d)) return dateStr;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+    } catch(e) {
+        return dateStr;
+    }
 }
 </script>
 </body>
