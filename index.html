@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuLu BI: Executive Master Dashboard</title>
     
-    <!-- Dependencies -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     
-    <!-- Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -73,10 +71,8 @@
         .table-responsive:hover::-webkit-scrollbar-thumb { background-color: rgba(134, 134, 139, 0.3); }
         ::-webkit-scrollbar-thumb:hover { background-color: rgba(134, 134, 139, 0.6) !important; }
 
-        /* BENTO GLASS ELEMENTS */
         .bento-glass { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); transition: background 0.4s, border-color 0.4s, transform 0.2s; }
         
-        /* RESPONSIVE HEADER ISLAND */
         .header-island { border-radius: 28px; margin: 20px 24px; padding: 15px 24px; display: flex; flex-wrap: wrap; gap: 15px; }
         .header-island .header-left, .header-island .header-right { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
         
@@ -138,10 +134,8 @@
         .sidebar-sticky { position: sticky; top: 20px; height: calc(100vh - 40px); overflow-y: auto; overflow-x: hidden; border-radius: 28px; }
         .chart-scroll-wrapper { overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
         
-        /* Smooth layout transitions */
         .transition-layout { transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), padding 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
         
-        /* --- MEDIA QUERIES FOR RESPONSIVENESS --- */
         @media (max-width: 991.98px) {
             .sidebar-sticky { position: relative; height: auto; top: 0; margin-bottom: 20px; }
             .header-island { margin: 15px; padding: 15px; flex-direction: column; align-items: stretch; border-radius: 24px; }
@@ -159,6 +153,10 @@
             .kpi-val { font-size: 1.4rem; }
             .glass-panel { width: 100%; justify-content: space-between; }
         }
+
+        /* Calendar input custom styling */
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.5); }
+        [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
     </style>
 </head>
 <body>
@@ -172,7 +170,7 @@
         
         <button class="btn btn-sm btn-outline-success rounded-pill fw-bold ms-lg-2" onclick="toggleSidebar()" style="font-size: 12px; border-width: 1.5px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-            Hide Filters
+            Toggle Filters
         </button>
 
         <div class="d-flex gap-1 w-100 mt-2 mt-md-0" style="max-width: 300px;">
@@ -199,7 +197,6 @@
 <div class="container-fluid px-2 px-md-4 pb-5 mb-5" id="dashboard" style="display:none">
     <div class="row g-3 g-md-4">
         
-        <!-- SIDEBAR -->
         <div class="col-12 col-lg-4 col-xl-3 transition-layout" id="sidebarCol">
             <div class="bento-glass p-3 p-md-4 sidebar-sticky">
                 <h5 class="fw-bold mb-4 d-flex align-items-center" style="color: var(--lulu-green);">
@@ -208,21 +205,42 @@
                 </h5>
                 
                 <h6 class="fw-bold mb-3">Time Selection</h6>
+                
                 <div class="glass-panel p-3 mb-3">
                     <label class="small fw-bold text-success mb-2">Target Period (A)</label>
-                    <div class="mb-2"><select id="selYear" class="form-select cascade-select" onchange="renderMonthSelection()"></select></div>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_TargetMonth">Select Months</button>
-                        <div class="dropdown-menu dropdown-menu-custom shadow" id="f_TargetMonth"></div>
+                    
+                    <div id="monthlyBoxA">
+                        <div class="mb-2"><select id="selYear" class="form-select cascade-select" onchange="renderMonthSelection()"></select></div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_TargetMonth">Select Months</button>
+                            <div class="dropdown-menu dropdown-menu-custom shadow" id="f_TargetMonth"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="dailyBoxA" style="display:none;">
+                        <span class="d-block text-muted mb-1" style="font-size:10px; font-weight:600;">START DATE</span>
+                        <input type="date" id="dateStartA" class="form-control form-control-sm mb-2" onchange="updateDailyPeriodB(); runAnalysis();">
+                        <span class="d-block text-muted mb-1" style="font-size:10px; font-weight:600;">END DATE</span>
+                        <input type="date" id="dateEndA" class="form-control form-control-sm" onchange="updateDailyPeriodB(); runAnalysis();">
                     </div>
                 </div>
 
                 <div id="customTimeBox" class="glass-panel p-3 mb-3" style="display: none;">
                     <label class="small fw-bold text-warning mb-2" style="color: #d4a106 !important;">Comparison Period (B)</label>
-                    <div class="mb-2"><select id="selPrevYear" class="form-select cascade-select" onchange="renderPrevMonthSelection()"></select></div>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_PrevMonth">Select Months</button>
-                        <div class="dropdown-menu dropdown-menu-custom shadow" id="f_PrevMonth"></div>
+                    
+                    <div id="monthlyBoxB">
+                        <div class="mb-2"><select id="selPrevYear" class="form-select cascade-select" onchange="renderPrevMonthSelection()"></select></div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary w-100 text-start cascade-select" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn_PrevMonth">Select Months</button>
+                            <div class="dropdown-menu dropdown-menu-custom shadow" id="f_PrevMonth"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="dailyBoxB" style="display:none;">
+                        <span class="d-block text-muted mb-1" style="font-size:10px; font-weight:600;">START DATE</span>
+                        <input type="date" id="dateStartB" class="form-control form-control-sm mb-2" onchange="runAnalysis();">
+                        <span class="d-block text-muted mb-1" style="font-size:10px; font-weight:600;">END DATE</span>
+                        <input type="date" id="dateEndB" class="form-control form-control-sm" onchange="runAnalysis();">
                     </div>
                 </div>
                 
@@ -252,7 +270,6 @@
             </div>
         </div>
 
-        <!-- MAIN DASHBOARD -->
         <div class="col-12 col-lg-8 col-xl-9 transition-layout" id="mainCol">
             
             <div class="row g-3 g-md-4 mb-4">
@@ -268,7 +285,7 @@
                     <h6 class="fw-bold mb-0 text-success">Smart Ask Agent</h6>
                 </div>
                 <div class="input-group mt-3 shadow-sm rounded-pill position-relative">
-                    <input type="text" id="aiSearchBox" class="form-control ai-search-input" placeholder="Ask anything (e.g., 'top 10 brands')..." autocomplete="off">
+                    <input type="text" id="aiSearchBox" class="form-control ai-search-input" placeholder="Ask anything (e.g., 'top 10 brands', 'show product 10452')..." autocomplete="off">
                     <button class="btn ai-btn-search" onclick="processSmartSearch()">Analyze</button>
                     <button class="btn btn-outline-danger ai-btn-clear" style="border-width:1px;" onclick="clearSmartSearch()">Clear</button>
                     <ul id="autocomplete-list" class="list-group position-absolute w-100 shadow-lg rounded-4 border-0 bento-glass" style="display: none; z-index: 1050; max-height: 250px; overflow-y: auto; top: 110%;"></ul>
@@ -343,7 +360,9 @@ let drillDownStack = [];
 let searchConfig = { isActive: false, limit: null, forceLevel: null, keyword: null };
 let suggestedQueries = []; 
 
-// SMART INITIALIZATION FOR MOBILE
+// V14: GLOBAL FLAG FOR CALENDAR DATA
+let hasDailyData = false;
+
 window.addEventListener('load', () => {
     if (window.innerWidth < 992) {
         document.getElementById('sidebarCol').classList.add('d-none');
@@ -386,7 +405,6 @@ function toggleSidebar() {
         sidebar.classList.add('d-none');
         main.className = 'col-12 transition-layout';
     }
-    
     if (chart) { setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300); }
 }
 
@@ -399,6 +417,12 @@ function formatValue(value, isCurrency, isGraphic = false) {
     }
 }
 
+function formatDateDisplay(dateStr) {
+    if(!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 upload.onchange = e => {
     const reader = new FileReader();
     reader.onload = ev => {
@@ -407,22 +431,43 @@ upload.onchange = e => {
             const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             rows = [];
             
+            // Check if "Calendar Day" column exists
+            hasDailyData = raw.some(r => r["Calendar Day"]);
+
             if (raw.length > 0 && raw[0].hasOwnProperty("Calendar Year/Month")) {
                 rows = raw.filter(r => r["Calendar Year/Month"]).map(r => {
                     const ym = String(r["Calendar Year/Month"]).trim();
                     const parts = ym.split(/\s+/);
                     const m3 = parts[0].substring(0,3).toUpperCase();
-                    return { ...r, _month: m3, _year: parts[1], "Calendar Year/Month": `${m3} ${parts[1]}` };
+                    
+                    // Parse Daily Date if it exists (Assuming format DD.MM.YYYY based on instructions)
+                    let isoDate = null;
+                    if(hasDailyData && r["Calendar Day"]) {
+                        let dParts = String(r["Calendar Day"]).split('.');
+                        if(dParts.length === 3) {
+                            isoDate = `${dParts[2]}-${dParts[1].padStart(2, '0')}-${dParts[0].padStart(2, '0')}`;
+                        }
+                    }
+
+                    return { ...r, _month: m3, _year: parts[1], "Calendar Year/Month": `${m3} ${parts[1]}`, _isoDate: isoDate };
                 });
             } else {
                 raw.forEach(row => {
+                    let isoDate = null;
+                    if(hasDailyData && row["Calendar Day"]) {
+                        let dParts = String(row["Calendar Day"]).split('.');
+                        if(dParts.length === 3) {
+                            isoDate = `${dParts[2]}-${dParts[1].padStart(2, '0')}-${dParts[0].padStart(2, '0')}`;
+                        }
+                    }
+
                     Object.keys(row).forEach(key => {
                         const kUpper = String(key).toUpperCase().trim();
                         if (monthOrder.some(m => kUpper.startsWith(m))) {
                             const parts = kUpper.split(/\s+/);
                             if (parts.length >= 2) {
                                 const m3 = parts[0].substring(0,3);
-                                rows.push({ ...row, "Calendar Year/Month": `${m3} ${parts[1]}`, _month: m3, _year: parts[1], "Sales Value": parseFloat(row[key]) || 0 });
+                                rows.push({ ...row, "Calendar Year/Month": `${m3} ${parts[1]}`, _month: m3, _year: parts[1], "Sales Value": parseFloat(row[key]) || 0, _isoDate: isoDate });
                             }
                         }
                     });
@@ -432,9 +477,39 @@ upload.onchange = e => {
             const hasCountry = rows.some(r => r.Country && String(r.Country).trim() !== "");
             document.getElementById('filter_Country_container').style.display = hasCountry ? 'block' : 'none';
 
+            // UI SWAP: Hide Month pickers, show Date pickers if daily data exists
+            if (hasDailyData) {
+                document.getElementById('monthlyBoxA').style.display = 'none';
+                document.getElementById('monthlyBoxB').style.display = 'none';
+                document.getElementById('dailyBoxA').style.display = 'block';
+                document.getElementById('dailyBoxB').style.display = 'block';
+                
+                // Find Min and Max dates to set boundaries
+                let allDates = rows.map(r => r._isoDate).filter(Boolean).sort();
+                if(allDates.length > 0) {
+                    let minD = allDates[0];
+                    let maxD = allDates[allDates.length - 1];
+                    
+                    document.getElementById('dateStartA').min = minD; document.getElementById('dateStartA').max = maxD;
+                    document.getElementById('dateEndA').min = minD; document.getElementById('dateEndA').max = maxD;
+                    document.getElementById('dateStartB').min = minD; document.getElementById('dateStartB').max = maxD;
+                    document.getElementById('dateEndB').min = minD; document.getElementById('dateEndB').max = maxD;
+                    
+                    // Set default selection to the max date
+                    document.getElementById('dateStartA').value = maxD;
+                    document.getElementById('dateEndA').value = maxD;
+                    updateDailyPeriodB();
+                }
+            } else {
+                document.getElementById('monthlyBoxA').style.display = 'block';
+                document.getElementById('monthlyBoxB').style.display = 'block';
+                document.getElementById('dailyBoxA').style.display = 'none';
+                document.getElementById('dailyBoxB').style.display = 'none';
+            }
+
             if(!chart) initChart();
-            buildTimeMap();
-            initUI();
+            if(!hasDailyData) buildTimeMap();
+            if(!hasDailyData) initUI();
             
             populateMultiSelect('Country', rows);
             populateMultiSelect('Department', rows);
@@ -445,7 +520,6 @@ upload.onchange = e => {
             
             document.getElementById('dashboard').style.display = 'block';
             
-            // Auto close sidebar on mobile after upload
             if (window.innerWidth < 992) {
                 document.getElementById('sidebarCol').classList.add('d-none');
                 document.getElementById('mainCol').className = 'col-12 transition-layout';
@@ -454,6 +528,30 @@ upload.onchange = e => {
     };
     reader.readAsArrayBuffer(e.target.files[0]);
 };
+
+// --- NEW DATE CALCULATION LOGIC ---
+function updateDailyPeriodB() {
+    if(!hasDailyData || mode === 'Custom') return;
+    
+    let startA = document.getElementById('dateStartA').value;
+    let endA = document.getElementById('dateEndA').value;
+    
+    if(!startA || !endA) return;
+
+    let d1 = new Date(startA);
+    let d2 = new Date(endA);
+
+    if(mode === 'YoY') {
+        d1.setFullYear(d1.getFullYear() - 1);
+        d2.setFullYear(d2.getFullYear() - 1);
+    } else if (mode === 'MoM') {
+        d1.setMonth(d1.getMonth() - 1);
+        d2.setMonth(d2.getMonth() - 1);
+    }
+
+    document.getElementById('dateStartB').value = d1.toISOString().split('T')[0];
+    document.getElementById('dateEndB').value = d2.toISOString().split('T')[0];
+}
 
 function buildSearchableTerms() {
     const depts = [...new Set(rows.map(r => r.Department))].filter(Boolean);
@@ -473,10 +571,7 @@ document.getElementById('aiSearchBox').addEventListener('input', function(e) {
     const list = document.getElementById('autocomplete-list');
     list.innerHTML = '';
     
-    if (!val || val.length < 2) {
-        list.style.display = 'none';
-        return;
-    }
+    if (!val || val.length < 2) { list.style.display = 'none'; return; }
 
     const matches = suggestedQueries.filter(q => q.text.toLowerCase().includes(val)).slice(0, 6);
     
@@ -495,9 +590,7 @@ document.getElementById('aiSearchBox').addEventListener('input', function(e) {
             };
             list.appendChild(li);
         });
-    } else {
-        list.style.display = 'none';
-    }
+    } else { list.style.display = 'none'; }
 });
 
 document.addEventListener('click', function (e) {
@@ -601,6 +694,7 @@ function updateTimeBtnText(type) {
 }
 
 function renderMonthSelection() {
+    if(hasDailyData) return;
     const y = document.getElementById('selYear').value;
     const container = document.getElementById('f_TargetMonth');
     if (!yearMonthMap[y]) { container.innerHTML = ''; updateTimeBtnText('TargetMonth'); runAnalysis(); return; }
@@ -621,6 +715,7 @@ function renderMonthSelection() {
 }
 
 function renderPrevMonthSelection() {
+    if(hasDailyData) return;
     const y = document.getElementById('selPrevYear').value;
     const container = document.getElementById('f_PrevMonth');
     if (!yearMonthMap[y]) { container.innerHTML = ''; updateTimeBtnText('PrevMonth'); if (mode === 'Custom') runAnalysis(); return; }
@@ -645,6 +740,8 @@ function setMode(m) {
     document.querySelectorAll('.nav-pill-lulu').forEach(b => b.classList.remove('active'));
     document.getElementById('btn' + m).classList.add('active');
     document.getElementById('customTimeBox').style.display = (m === 'Custom') ? 'block' : 'none';
+    
+    if(hasDailyData) updateDailyPeriodB();
     runAnalysis();
 }
 
@@ -831,48 +928,56 @@ function clearAllDrill() {
 }
 
 function runAnalysis() {
-    const curYear = document.getElementById('selYear').value;
     const metric = document.getElementById('metric').value;
-    if(!curYear) return;
+    let displayCurLabel = "", displayPrevLabel = "";
+    
+    // --- TIME PARSING LOGIC FOR DAILY VS MONTHLY ---
+    let curLabels = [], prevLabels = [];
+    let startA, endA, startB, endB;
 
-    const targetMonths = Array.from(document.querySelectorAll('#f_TargetMonth input:checked')).map(i => i.value);
-    let prevMonths = [];
-    let prevYear = "";
-
-    if (mode === 'Custom') {
-        prevYear = document.getElementById('selPrevYear').value;
-        prevMonths = Array.from(document.querySelectorAll('#f_PrevMonth input:checked')).map(i => i.value);
-    } else if (mode === 'YoY') { 
-        prevYear = (parseInt(curYear) - 1).toString();
-        prevMonths = [...targetMonths];
+    if (hasDailyData) {
+        startA = document.getElementById('dateStartA').value;
+        endA = document.getElementById('dateEndA').value;
+        startB = document.getElementById('dateStartB').value;
+        endB = document.getElementById('dateEndB').value;
+        
+        displayCurLabel = `${formatDateDisplay(startA)} - ${formatDateDisplay(endA)}`;
+        displayPrevLabel = `${formatDateDisplay(startB)} - ${formatDateDisplay(endB)}`;
     } else {
-        prevYear = curYear; 
+        const curYear = document.getElementById('selYear').value;
+        if(!curYear) return;
+        const targetMonths = Array.from(document.querySelectorAll('#f_TargetMonth input:checked')).map(i => i.value);
+        let prevMonths = [];
+        let prevYear = "";
+
+        if (mode === 'Custom') {
+            prevYear = document.getElementById('selPrevYear').value;
+            prevMonths = Array.from(document.querySelectorAll('#f_PrevMonth input:checked')).map(i => i.value);
+        } else if (mode === 'YoY') { 
+            prevYear = (parseInt(curYear) - 1).toString();
+            prevMonths = [...targetMonths];
+        } else { prevYear = curYear; }
+
+        curLabels = targetMonths.map(m => `${m} ${curYear}`);
+
+        if (mode === 'MoM') {
+            prevLabels = targetMonths.map(m => {
+                const mIdx = monthOrder.indexOf(m);
+                if (mIdx === 0) return `DEC ${parseInt(curYear) - 1}`;
+                return `${monthOrder[mIdx - 1]} ${curYear}`;
+            });
+        } else { prevLabels = prevMonths.map(m => `${m} ${prevYear}`); }
+
+        const formatTimeLabel = (months, y) => {
+            if (months.length === 0) return `No Selection`;
+            if (months.length === 1) return `${months[0]} ${y}`;
+            if (months.length <= 3) return `${months.join('/')} ${y}`;
+            return `${months.length} Months`;
+        };
+
+        displayCurLabel = formatTimeLabel(targetMonths, curYear);
+        displayPrevLabel = mode === 'MoM' && targetMonths.length > 0 ? (targetMonths.length === 1 ? prevLabels[0] : `${targetMonths.length} Prev Mths`) : formatTimeLabel(prevMonths, prevYear);
     }
-
-    let curLabels = targetMonths.map(m => `${m} ${curYear}`);
-    let prevLabels = [];
-
-    if (mode === 'MoM') {
-        prevLabels = targetMonths.map(m => {
-            const mIdx = monthOrder.indexOf(m);
-            if (mIdx === 0) return `DEC ${parseInt(curYear) - 1}`;
-            return `${monthOrder[mIdx - 1]} ${curYear}`;
-        });
-    } else {
-        prevLabels = prevMonths.map(m => `${m} ${prevYear}`);
-    }
-
-    const formatTimeLabel = (months, y) => {
-        if (months.length === 0) return `No Selection`;
-        if (months.length === 1) return `${months[0]} ${y}`;
-        if (months.length <= 3) return `${months.join('/')} ${y}`;
-        return `${months.length} Months`;
-    };
-
-    let displayCurLabel = formatTimeLabel(targetMonths, curYear);
-    let displayPrevLabel = mode === 'MoM' && targetMonths.length > 0 
-        ? (targetMonths.length === 1 ? prevLabels[0] : `${targetMonths.length} Prev Mths`) 
-        : formatTimeLabel(prevMonths, prevYear);
 
     let d = getFilteredDataForLevel(hierarchyConfig.length);
 
@@ -935,16 +1040,22 @@ function runAnalysis() {
     const map = {};
     d.forEach(r => {
         let k = r[currentAggLevel] || "Unknown Item";
-        
         if (currentAggLevel === "Product Name") {
             const pid = r["Product ID"] || r["ProductID"] || r["Item Code"] || r["Material"] || r["Article"];
             if (pid) k = `${pid} - ${k}`;
         }
         
         if(!map[k]) map[k] = { cur: 0, prev: 0 };
-        const rowDate = r["Calendar Year/Month"];
-        if(curLabels.includes(rowDate)) map[k].cur += (+r[metric] || 0);
-        if(prevLabels.includes(rowDate)) map[k].prev += (+r[metric] || 0);
+        
+        if (hasDailyData) {
+            const rDate = r._isoDate;
+            if (rDate && rDate >= startA && rDate <= endA) map[k].cur += (+r[metric] || 0);
+            if (rDate && rDate >= startB && rDate <= endB) map[k].prev += (+r[metric] || 0);
+        } else {
+            const rowDate = r["Calendar Year/Month"];
+            if(curLabels.includes(rowDate)) map[k].cur += (+r[metric] || 0);
+            if(prevLabels.includes(rowDate)) map[k].prev += (+r[metric] || 0);
+        }
     });
 
     let results = Object.entries(map);
